@@ -92,14 +92,14 @@ task AlignAndMarkDuplicates {
     set -e
     set -x
 
-    mv ~{ref_fasta} .
-    mv ~{ref_fasta_index} .
-    mv ~{ref_dict} .
-    mv ~{ref_amb} .
-    mv ~{ref_ann} .
-    mv ~{ref_bwt} .
-    mv ~{ref_pac} .
-    mv ~{ref_sa} .
+    cp ~{ref_fasta} .
+    cp ~{ref_fasta_index} .
+    cp ~{ref_dict} .
+    cp ~{ref_amb} .
+    cp ~{ref_ann} .
+    cp ~{ref_bwt} .
+    cp ~{ref_pac} .
+    cp ~{ref_sa} .
 
     ls -al
     

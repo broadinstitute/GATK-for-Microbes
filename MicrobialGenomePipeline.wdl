@@ -1,6 +1,7 @@
 version 1.0
 
-import "https://api.firecloud.org/ga4gh/v1/tools/andrea_methods:MicrobialAlignmentPipeline/versions/7/plain-WDL/descriptor" as AlignAndMarkDuplicates
+#import "https://api.firecloud.org/ga4gh/v1/tools/andrea_methods:MicrobialAlignmentPipeline/versions/8/plain-WDL/descriptor" as AlignAndMarkDuplicates
+import https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/MicrobialAlignmentPipeline.wdl?token=ACZ6TUS37TR3UZXPCMDDFS266DFFM
 
 # import "MicrobialAlignmentPipeline.wdl" as AlignAndMarkDuplicates
 
@@ -25,8 +26,6 @@ workflow MicrobialGenomePipeline {
     File ref_pac
     File ref_sa
      
-
-    File? gatk_override
     String? m2_extra_args
     String? m2_filter_extra_args
 
@@ -221,7 +220,7 @@ task ShiftReference {
   >>>
   runtime {
       docker: "us.gcr.io/broad-gatk/gatk:4.1.7.0"
-      memory: "4 MB"
+      memory: "2 GB"
       disks: "local-disk " + disk_size + " HDD"
       preemptible: select_first([preemptible_tries, 5])
       cpu: 2
@@ -245,7 +244,7 @@ task IndexReference {
   
   command <<<
       set -e
-      mv ~{ref_fasta} .
+      cp ~{ref_fasta} .
       /usr/gitc/bwa index ~{basename}
       ls -al
       find . -name *.pac -print
@@ -430,7 +429,7 @@ task LiftoverAndCombineVcfs {
     >>>
     runtime {
       disks: "local-disk " + disk_size + " HDD"
-      memory: "1200 MB"
+      memory: "1 GB"
       docker: "us.gcr.io/broad-gotc-prod/genomes-in-the-cloud:2.4.2-1552931386"
       preemptible: select_first([preemptible_tries, 5])
     }

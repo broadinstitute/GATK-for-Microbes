@@ -2,6 +2,7 @@
 "MicrobialAlignmentPipeline.input_bam":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/D1CLVACXX.1.Solexa-125092.aligned.bam",
 "MicrobialAlignmentPipeline.ref_fasta":"gs://broad-dsp-spec-ops-cromwell-execution/MicrobialGenomePipeline/3a66aa17-0376-4890-a384-833a659f411c/call-ShiftReference/Mycobacterium_tuberculosis_H37Rv.shifted.fasta",
 "MicrobialAlignmentPipeline.ref_dict":"gs://broad-dsp-spec-ops-cromwell-execution/MicrobialGenomePipeline/3a66aa17-0376-4890-a384-833a659f411c/call-ShiftReference/Mycobacterium_tuberculosis_H37Rv.shifted.dict",
-"MicrobialAlignmentPipeline.ref_fasta_index":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.shifted.fasta.fai"
+"MicrobialAlignmentPipeline.ref_fasta_index":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.shifted.fasta.fai",
+"MicrobialAlignmentPipeline.gatk_override":"gs://emeryj-testing/gatk-package-4.1.7.0-4-ga4994f1-SNAPSHOT-local.jar"
 }
 
