@@ -1,8 +1,15 @@
 {
-"MicrobialAlignmentPipeline.input_bam":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/D1CLVACXX.1.Solexa-125092.aligned.bam",
-"MicrobialAlignmentPipeline.ref_fasta":"gs://broad-dsp-spec-ops-cromwell-execution/MicrobialGenomePipeline/3a66aa17-0376-4890-a384-833a659f411c/call-ShiftReference/Mycobacterium_tuberculosis_H37Rv.shifted.fasta",
-"MicrobialAlignmentPipeline.ref_dict":"gs://broad-dsp-spec-ops-cromwell-execution/MicrobialGenomePipeline/3a66aa17-0376-4890-a384-833a659f411c/call-ShiftReference/Mycobacterium_tuberculosis_H37Rv.shifted.dict",
-"MicrobialAlignmentPipeline.ref_fasta_index":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.shifted.fasta.fai",
-"MicrobialAlignmentPipeline.gatk_override":"gs://emeryj-testing/gatk-package-4.1.7.0-4-ga4994f1-SNAPSHOT-local.jar"
+"MicrobialGenomePipeline.sample_name":"Solexa-125092",
+"MicrobialGenomePipeline.input_bam":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/D1CLVACXX.1.Solexa-125092.aligned.bam",
+"MicrobialGenomePipeline.input_bam_index":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/D1CLVACXX.1.Solexa-125092.aligned.bam.bai",
+"MicrobialGenomePipeline.ref_fasta":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta",
+"MicrobialGenomePipeline.ref_dict":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.dict",
+"MicrobialGenomePipeline.ref_fasta_index":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.fai",
+"MicrobialGenomePipeline.ref_amb":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.amb",
+"MicrobialGenomePipeline.ref_ann":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.ann",
+"MicrobialGenomePipeline.ref_bwt":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.bwt",
+"MicrobialGenomePipeline.ref_pac":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.pac",
+"MicrobialGenomePipeline.ref_sa":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.sa",
+"MicrobialGenomePipeline.gatk_override":"gs://broad-dsp-spec-ops/scratch/andrea/gatk-package-shiftfasta.jar"
 }
 
