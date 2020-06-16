@@ -108,6 +108,7 @@ workflow MicrobialGenomePipeline {
       ref_fasta = ref_fasta,
       ref_fai = ref_fasta_index,
       ref_dict = ref_dict,
+      intervals = ShiftReference.unshifted_intervals,
       gatk_override = gatk_override,
       # Everything is called except the control region.
       # m2_extra_args = select_first([m2_extra_args, ""]) + " -L chrM:576-16024 ",
@@ -121,6 +122,7 @@ workflow MicrobialGenomePipeline {
       ref_fasta = ShiftReference.shifted_ref_fasta,
       ref_fai = ShiftReference.shifted_ref_fasta_index,
       ref_dict = ShiftReference.shifted_ref_dict,
+      intervals = ShiftReference.shifted_intervals,
       gatk_override = gatk_override,
       # Everything is called except the control region.
       # m2_extra_args = select_first([m2_extra_args, ""]) + " -L chrM:8025-9144 ",
@@ -216,6 +218,7 @@ task ShiftReference {
       gatk --java-options "-Xmx2500m" ShiftFasta \
         -R ~{ref_fasta} \
         -O ~{basename}.shifted.fasta \
+        --interval-file-name ~{basename} \
         --shift-back-output ~{basename}.shiftback.chain
   >>>
   runtime {
@@ -230,6 +233,8 @@ task ShiftReference {
     File shifted_ref_fasta_index = "~{basename}.shifted.fasta.fai"
     File shifted_ref_dict = "~{basename}.shifted.dict"
     File shiftback_chain = "~{basename}.shiftback.chain"
+    File unshifted_intervals = "~{basename}.intervals"
+    File shifted_intervals = "~{basename}.shifted.intervals"
   }
 }
 
@@ -448,6 +453,7 @@ task M2 {
     File ref_dict
     File input_bam
     File input_bai
+    File intervals
     String? m2_extra_args
     Boolean? make_bamout
     File? gga_vcf
@@ -480,7 +486,7 @@ task M2 {
       export GATK_LOCAL_JAR=~{default="/root/gatk.jar" gatk_override}
 
       # We need to create these files regardless, even if they stay empty
-      # TODO remove this comment because I am adding it randomly to this file.
+      # TODO change --mitochondria-mode to --microbial-mode
       touch bamout.bam
 
       gatk --java-options "-Xmx~{command_mem}m" Mutect2 \
@@ -488,6 +494,7 @@ task M2 {
         -I ~{input_bam} \
         ~{"--alleles " + gga_vcf} \
         -O ~{output_vcf} \
+        -L ~{intervals} \
         ~{true='--bam-output bamout.bam' false='' make_bamout} \
         ~{m2_extra_args} \
         --annotation StrandBiasBySample \
