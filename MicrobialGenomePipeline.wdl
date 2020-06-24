@@ -1,7 +1,8 @@
 version 1.0
 
 #import "https://api.firecloud.org/ga4gh/v1/tools/andrea_methods:MicrobialAlignmentPipeline/versions/8/plain-WDL/descriptor" as AlignAndMarkDuplicates
-import https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/MicrobialAlignmentPipeline.wdl?token=ACZ6TUS37TR3UZXPCMDDFS266DFFM
+import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/MicrobialAlignmentPipeline.wdl" as AlignAndMarkDuplicates
+
 
 # import "MicrobialAlignmentPipeline.wdl" as AlignAndMarkDuplicates
 
