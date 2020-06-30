@@ -1,11 +1,9 @@
 version 1.0
 
-#import "https://api.firecloud.org/ga4gh/v1/tools/andrea_methods:MicrobialAlignmentPipeline/versions/8/plain-WDL/descriptor" as AlignAndMarkDuplicates
-import https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/MicrobialAlignmentPipeline.WDL as AlignAndMarkDuplicates
-import https://api.firecloud.org/ga4gh/v1/tools/jakec:SamToFastq/versions/8/plain-WDL/descriptor as SamToFastq
-import https://raw.githubusercontent.com/gatk-workflows/seq-format-conversion/Paired-FASTQ-to-Unmapped-BAM:3.0.0 as FastqToUnmappedBam
-
-# import "MicrobialAlignmentPipeline.wdl" as AlignAndMarkDuplicates
+import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/MicrobialAlignmentPipeline.wdl" as AlignAndMarkDuplicates
+import "https://api.firecloud.org/ga4gh/v1/tools/jakec:SamToFastq/versions/8/plain-WDL/descriptor" as SamToFastq
+#import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/SamToFastq.wdl" as SamToFastq
+import "https://raw.githubusercontent.com/gatk-workflows/seq-format-conversion/Paired-FASTQ-to-Unmapped-BAM:3.0.0" as FastqToUnmappedBam
 
 workflow MicrobialGenomePipeline {
 
@@ -31,12 +29,12 @@ workflow MicrobialGenomePipeline {
     # iputs required when starting from fastq files
     File? input_fastq1
     File? input_fastq2
-    String readgroup_name
-    String library_name
-    String platform_unit
-    String run_date
-    String platform_name
-    String sequencing_center
+    String? readgroup_name
+    String? library_name
+    String? platform_unit
+    String? run_date
+    String? platform_name
+    String? sequencing_center
     File? fastqunpaired
 
     Int? num_dangling_bases
@@ -80,7 +78,7 @@ workflow MicrobialGenomePipeline {
         preemptible_tries = preemptible_tries
     }
 
-    call SamToFastq {
+    call SamToFastq.SamToFastqTest as SamToFastq {
       input:
         inputBam = input_bam,
         sampleName = sample_name,
@@ -90,17 +88,17 @@ workflow MicrobialGenomePipeline {
   }
 
   if (defined(input_fastq1) && defined(input_fastq2)) {
-    call FastqToUnmappedBam {
+    call FastqToUnmappedBam.ConvertPairedFastQsToUnmappedBamWf as FastqToUnmappedBam {
       input:
         sample_name = sample_name,
         fastq_1 = input_fastq1,
         fastq_2 = input_fastq1,
-        readgroup_name = ,
-        library_name = ,
-        platform_unit = ,
-        run_date = ,
-        platform_name = ,
-        sequencing_center = ,
+        readgroup_name = readgroup_name,
+        library_name = library_name,
+        platform_unit = platform_unit,
+        run_date = run_date,
+        platform_name = platform_name,
+        sequencing_center = sequencing_center,
         gatk_path = "gatk",
         docker = gatk_docker_override
     }
