@@ -314,7 +314,7 @@ task IndexReference {
 
 task RevertSam {
   input {
-    File input_bam
+    File? input_bam
     String basename = basename(input_bam, ".bam")
 
     # runtime
