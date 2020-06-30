@@ -89,7 +89,7 @@ task AlignAndMarkDuplicates {
     description: "Aligns with BWA and MergeBamAlignment, then Marks Duplicates. Outputs a coordinate sorted bam."
   }
   parameter_meta {
-    input_bam: "Unmapped bam"
+    unmapped_bam: "Unmapped bam"
     bwa_version: "BWA version to be added to header of aligned bam"
   }
   command <<<
