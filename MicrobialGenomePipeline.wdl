@@ -1,8 +1,8 @@
 version 1.0
 
 import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/MicrobialAlignmentPipeline.wdl" as AlignAndMarkDuplicates
-import "https://api.firecloud.org/ga4gh/v1/tools/jakec:SamToFastq/versions/8/plain-WDL/descriptor" as SamToFastq
-#import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/SamToFastq.wdl" as SamToFastq
+# import "https://api.firecloud.org/ga4gh/v1/tools/jakec:SamToFastq/versions/8/plain-WDL/descriptor" as SamToFastq
+import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/SamToFastq.wdl" as SamToFastq
 import "https://raw.githubusercontent.com/gatk-workflows/seq-format-conversion/Paired-FASTQ-to-Unmapped-BAM:3.0.0" as FastqToUnmappedBam
 
 workflow MicrobialGenomePipeline {
@@ -78,7 +78,7 @@ workflow MicrobialGenomePipeline {
         preemptible_tries = preemptible_tries
     }
 
-    call SamToFastq.SamToFastqTest as SamToFastq {
+    call SamToFastq.SamToFastq as SamToFastq {
       input:
         inputBam = input_bam,
         sampleName = sample_name,
