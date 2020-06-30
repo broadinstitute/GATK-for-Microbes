@@ -497,7 +497,6 @@ task Filter {
     Float? vaf_filter_threshold
     Float? f_score_beta
 
-    Boolean run_contamination
     Float? verifyBamID
 
     File? gatk_override
