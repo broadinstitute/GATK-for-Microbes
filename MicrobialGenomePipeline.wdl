@@ -191,9 +191,27 @@ Int num_dangling_bases = select_first([num_dangling_bases, 3])
       preemptible_tries = preemptible_tries
   }
 
+  call Filter {
+    input:
+      raw_vcf = LiftoverAndCombineVcfs.merged_vcf,
+      raw_vcf_index = LiftoverAndCombineVcfs.merged_vcf_index,
+      raw_vcf_stats = MergeStats.stats,
+      sample_name = sample_name,
+      ref_fasta = ref_fasta,
+      ref_fai = ref_fasta_index,
+      ref_dict = ref_dict,
+      gatk_override = gatk_override,
+      gatk_docker_override = gatk_docker_override,
+      m2_extra_filtering_args = m2_filter_extra_args,
+      # vaf_filter_threshold = 0,  # do we need this value?
+      preemptible_tries = preemptible_tries
+  }
+
   output {
     File final_vcf = LiftoverAndCombineVcfs.final_vcf
     File final_vcf_index = LiftoverAndCombineVcfs.final_vcf_index
+    File filtered_vcf = Filter.filtered_vcf
+    File filtered_vcf_idx = Filter.filtered_vcf_idx
     File unmapped_bam = RevertSam.unmapped_bam
     File shifted_ref_dict = ShiftReference.shifted_ref_dict
     File shifted_ref_fasta = ShiftReference.shifted_ref_fasta
@@ -462,6 +480,75 @@ task M2 {
       File raw_vcf_idx = "~{output_vcf_index}"
       File stats = "~{output_vcf}.stats"
       File output_bamOut = "bamout.bam"
+  }
+}
+
+task Filter {
+  input {
+    File ref_fasta
+    File ref_fai
+    File ref_dict
+    File raw_vcf
+    File raw_vcf_index
+    File raw_vcf_stats
+    Float? vaf_cutoff
+    String sample_name
+
+    String? m2_extra_filtering_args
+    Int max_alt_allele_count
+    Float? vaf_filter_threshold
+    Float? f_score_beta
+
+    Boolean run_contamination
+    Float? verifyBamID
+
+    File? gatk_override
+    String? gatk_docker_override
+
+  # runtime
+    Int? preemptible_tries
+  }
+
+  String output_vcf = sub(sample_name, "(0x20 | 0x9 | 0xD | 0xA)+", "_") + if compress then ".vcf.gz" else ".vcf"
+  Float ref_size = size(ref_fasta, "GB") + size(ref_fai, "GB")
+  Int disk_size = ceil(size(raw_vcf, "GB") + ref_size) + 20
+  
+  meta {
+    description: "Mutect2 Filtering for calling Snps and Indels"
+  }
+  parameter_meta {
+      vaf_filter_threshold: "Hard cutoff for minimum allele fraction. All sites with VAF less than this cutoff will be filtered."
+      f_score_beta: "F-Score beta balances the filtering strategy between recall and precision. The relative weight of recall to precision."
+  }
+  command <<<
+      set -e
+
+      export GATK_LOCAL_JAR=~{default="/root/gatk.jar" gatk_override}
+
+      # We need to create these files regardless, even if they stay empty
+      touch bamout.bam
+
+      gatk --java-options "-Xmx2500m" FilterMutectCalls -V ~{raw_vcf} \
+        -R ~{ref_fasta} \
+        -O filtered.vcf \
+        --stats ~{raw_vcf_stats} \
+        ~{m2_extra_filtering_args} \
+        # --max-alt-allele-count ~{max_alt_allele_count} \
+        --microbial-mode 
+        # ~{"--min-allele-fraction " + vaf_filter_threshold} \
+        # ~{"--f-score-beta " + f_score_beta} \
+        # ~{"--contamination-estimate " + max_contamination}
+  >>>
+  runtime {
+      docker: select_first([gatk_docker_override, "us.gcr.io/broad-gatk/gatk:4.1.8.0"])
+      memory: "4 MB"
+      disks: "local-disk " + disk_size + " HDD"
+      preemptible: select_first([preemptible_tries, 5])
+      cpu: 2
+  }
+  output {
+      File filtered_vcf = "~{output_vcf}"
+      File filtered_vcf_idx = "~{output_vcf_index}"
   }
 }
 
