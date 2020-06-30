@@ -27,8 +27,8 @@ workflow MicrobialGenomePipeline {
     File? input_bam_index
 
     # iputs required when starting from fastq files
-    File? input_fastq1
-    File? input_fastq2
+    String? input_fastq1
+    String? input_fastq2
     String? readgroup_name
     String? library_name
     String? platform_unit
@@ -74,13 +74,13 @@ workflow MicrobialGenomePipeline {
   if (defined(input_bam)) {
     call RevertSam {
       input:
-        input_bam = input_bam,
+        input_bam = select_first([input_bam, ""]),
         preemptible_tries = preemptible_tries
     }
 
     call SamToFastq.convertSamToFastq as SamToFastq {
       input:
-        inputBam = input_bam,
+        inputBam = RevertSam.unmapped_bam,
         sampleName = sample_name,
         memoryGb = 4,
         diskSpaceGb = 100 # TODO see if we can do computations on the input_bam size here
@@ -91,23 +91,21 @@ workflow MicrobialGenomePipeline {
     call FastqToUnmappedBam.ConvertPairedFastQsToUnmappedBamWf as FastqToUnmappedBam {
       input:
         sample_name = sample_name,
-        fastq_1 = input_fastq1,
-        fastq_2 = input_fastq1,
-        readgroup_name = readgroup_name,
-        library_name = library_name,
-        platform_unit = platform_unit,
-        run_date = run_date,
-        platform_name = platform_name,
-        sequencing_center = sequencing_center,
-        gatk_path = "gatk",
-        docker = gatk_docker_override
+        fastq_1 = select_first([input_fastq1, ""]),
+        fastq_2 = select_first([input_fastq1, ""]),
+        readgroup_name = select_first([readgroup_name, ""]),
+        library_name = select_first([library_name, ""]),
+        platform_unit = select_first([platform_unit, ""]),
+        run_date = select_first([run_date, ""]),
+        platform_name = select_first([platform_name, ""]),
+        sequencing_center = select_first([sequencing_center, ""])
     }
   }
 
-File? fastq1 = select_first([input_fastq1, SamToFastq.fastq1])
-File? fastq2 = select_first([input_fastq1, SamToFastq.fastq2])
-File? ubam = select_first([RevertSam.unmapped_bam, FastqToUnmappedBam.output_unmapped_bam])
-Int num_dangling_bases = select_first([num_dangling_bases, 3])
+File fastq1 = select_first([input_fastq1, SamToFastq.fastq1])
+File fastq2 = select_first([input_fastq1, SamToFastq.fastq2])
+File ubam = select_first([RevertSam.unmapped_bam, FastqToUnmappedBam.output_unmapped_bam])
+Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
 
 # pass in 2 fastq files and unmapped bam
   call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToRef {
@@ -150,7 +148,7 @@ Int num_dangling_bases = select_first([num_dangling_bases, 3])
       ref_fai = ref_fasta_index,
       ref_dict = ref_dict,
       intervals = ShiftReference.unshifted_intervals,
-      num_dangling_bases = num_dangling_bases,
+      num_dangling_bases = num_dangling_bases_with_default,
       make_bamout = make_bamout,
       gatk_override = gatk_override,
       preemptible_tries = preemptible_tries
@@ -164,7 +162,7 @@ Int num_dangling_bases = select_first([num_dangling_bases, 3])
       ref_fai = ShiftReference.shifted_ref_fasta_index,
       ref_dict = ShiftReference.shifted_ref_dict,
       intervals = ShiftReference.shifted_intervals,
-      num_dangling_bases = num_dangling_bases,
+      num_dangling_bases = num_dangling_bases_with_default,
       make_bamout = make_bamout,
       gatk_override = gatk_override,
       preemptible_tries = preemptible_tries
@@ -210,7 +208,7 @@ Int num_dangling_bases = select_first([num_dangling_bases, 3])
     File final_vcf_index = LiftoverAndCombineVcfs.final_vcf_index
     File filtered_vcf = Filter.filtered_vcf
     File filtered_vcf_idx = Filter.filtered_vcf_idx
-    File unmapped_bam = RevertSam.unmapped_bam
+    File unmapped_bam = ubam
     File shifted_ref_dict = ShiftReference.shifted_ref_dict
     File shifted_ref_fasta = ShiftReference.shifted_ref_fasta
     File shifted_ref_fasta_index = ShiftReference.shifted_ref_fasta_index
@@ -314,7 +312,7 @@ task IndexReference {
 
 task RevertSam {
   input {
-    File? input_bam
+    File input_bam
     String basename = basename(input_bam, ".bam")
 
     # runtime
@@ -493,10 +491,7 @@ task Filter {
     String sample_name
 
     String? m2_extra_filtering_args
-    Int max_alt_allele_count
-    Float? vaf_filter_threshold
-    Float? f_score_beta
-
+  
     Float? verifyBamID
 
     File? gatk_override
