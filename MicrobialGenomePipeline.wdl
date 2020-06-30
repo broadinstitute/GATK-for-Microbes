@@ -532,8 +532,8 @@ task Filter {
         -O filtered.vcf \
         --stats ~{raw_vcf_stats} \
         ~{m2_extra_filtering_args} \
-        # --max-alt-allele-count ~{max_alt_allele_count} \
         --microbial-mode 
+         # --max-alt-allele-count ~{max_alt_allele_count} \
         # ~{"--min-allele-fraction " + vaf_filter_threshold} \
         # ~{"--f-score-beta " + f_score_beta} \
         # ~{"--contamination-estimate " + max_contamination}
