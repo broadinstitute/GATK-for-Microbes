@@ -25,7 +25,6 @@ workflow MicrobialAlignmentPipeline {
   }
 
   parameter_meta {
-    # input_bam: "Input is an unaligned bam of reads and their mates. All reads must be paired."
     ref_aligned_bam: "Output is aligned duplicate marked coordinate sorted bam."
   }
 
