@@ -78,7 +78,7 @@ workflow MicrobialGenomePipeline {
         preemptible_tries = preemptible_tries
     }
 
-    call SamToFastq.SamToFastq as SamToFastq {
+    call SamToFastq.convertSamToFastq as SamToFastq {
       input:
         inputBam = input_bam,
         sampleName = sample_name,
