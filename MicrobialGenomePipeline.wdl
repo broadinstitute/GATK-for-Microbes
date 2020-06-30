@@ -532,10 +532,6 @@ task Filter {
         --stats ~{raw_vcf_stats} \
         ~{m2_extra_filtering_args} \
         --microbial-mode 
-         # --max-alt-allele-count ~{max_alt_allele_count} \
-        # ~{"--min-allele-fraction " + vaf_filter_threshold} \
-        # ~{"--f-score-beta " + f_score_beta} \
-        # ~{"--contamination-estimate " + max_contamination}
   >>>
   runtime {
       docker: select_first([gatk_docker_override, "us.gcr.io/broad-gatk/gatk:4.1.8.0"])
