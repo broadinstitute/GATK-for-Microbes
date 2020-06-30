@@ -507,7 +507,8 @@ task Filter {
     Int? preemptible_tries
   }
 
-  String output_vcf = sub(sample_name, "(0x20 | 0x9 | 0xD | 0xA)+", "_") + if compress then ".vcf.gz" else ".vcf"
+  String output_vcf = sub(sample_name, "(0x20 | 0x9 | 0xD | 0xA)+", "_") + ".vcf"
+  String output_vcf_index = output_vcf + ".idx"
   Float ref_size = size(ref_fasta, "GB") + size(ref_fai, "GB")
   Int disk_size = ceil(size(raw_vcf, "GB") + ref_size) + 20
   
