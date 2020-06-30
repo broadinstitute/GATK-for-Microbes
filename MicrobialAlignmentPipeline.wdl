@@ -61,7 +61,7 @@ task AlignAndMarkDuplicates {
     File unmapped_bam
     File fastq1
     File fastq2
-    String bwa_commandline = "bwa mem -K 100000000 -p -v 3 -t 2 -Y $bash_ref_fasta"
+    String bwa_commandline = "bwa mem -K 100000000 -v 3 -t 2 -Y $bash_ref_fasta"
     String bwa_version
     String output_bam_basename
     File ref_fasta
