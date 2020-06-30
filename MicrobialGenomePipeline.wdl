@@ -447,9 +447,9 @@ task M2 {
       export GATK_LOCAL_JAR=~{default="/root/gatk.jar" gatk_override}
 
       # We need to create these files regardless, even if they stay empty
-      # TODO change --mitochondria-mode to --microbial-mode
       touch bamout.bam
 
+      # TODO change param back to num_dangling_bases
       gatk --java-options "-Xmx~{command_mem}m" Mutect2 \
         -R ~{ref_fasta} \
         -I ~{input_bam} \
@@ -459,8 +459,7 @@ task M2 {
         ~{true='--bam-output bamout.bam' false='' make_bamout} \
         ~{m2_extra_args} \
         --annotation StrandBiasBySample \
-        --microbial-mode \
-        --num-matching-bases-in-dangling-end-to-recover num_dangling_bases \
+        --num-matching-bases-in-dangling-end-to-recover 1 \
         --max-reads-per-alignment-start 75 \
         --max-mnp-distance 0
   >>>
@@ -508,10 +507,6 @@ task Filter {
   
   meta {
     description: "Mutect2 Filtering for calling Snps and Indels"
-  }
-  parameter_meta {
-      vaf_filter_threshold: "Hard cutoff for minimum allele fraction. All sites with VAF less than this cutoff will be filtered."
-      f_score_beta: "F-Score beta balances the filtering strategy between recall and precision. The relative weight of recall to precision."
   }
   command <<<
       set -e
