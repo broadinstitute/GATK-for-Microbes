@@ -10,12 +10,19 @@ workflow convertSamToFastq {
   }
     
 	call samToFastq {
-	  input:
+		input:
 		inputBam = inputBam,
 		sampleName = sampleName,
 		memoryGb = memoryGb,
 		diskSpaceGb = diskSpaceGb
 	}
+
+	output {
+		File fastq1 = samToFastq.firstEndFastq
+		File fastq2 = samToFastq.secondEndFastq
+		File unpairedFastq = samToFastq.unpairedFastq
+	}
+
 }
 
 task samToFastq {

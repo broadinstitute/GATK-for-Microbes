@@ -191,8 +191,8 @@ Int num_dangling_bases = select_first([num_dangling_bases, 3])
 
   call Filter {
     input:
-      raw_vcf = LiftoverAndCombineVcfs.merged_vcf,
-      raw_vcf_index = LiftoverAndCombineVcfs.merged_vcf_index,
+      raw_vcf = LiftoverAndCombineVcfs.final_vcf,
+      raw_vcf_index = LiftoverAndCombineVcfs.final_vcf_index,
       raw_vcf_stats = MergeStats.stats,
       sample_name = sample_name,
       ref_fasta = ref_fasta,
