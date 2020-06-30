@@ -1,22 +1,20 @@
 version 1.0
 
 #import "https://api.firecloud.org/ga4gh/v1/tools/andrea_methods:MicrobialAlignmentPipeline/versions/8/plain-WDL/descriptor" as AlignAndMarkDuplicates
-import https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/MicrobialAlignmentPipeline.wdl?token=ACZ6TUS37TR3UZXPCMDDFS266DFFM
+import https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/ah_initial_wdl/MicrobialAlignmentPipeline.WDL as AlignAndMarkDuplicates
+import https://api.firecloud.org/ga4gh/v1/tools/jakec:SamToFastq/versions/8/plain-WDL/descriptor as SamToFastq
+import https://raw.githubusercontent.com/gatk-workflows/seq-format-conversion/Paired-FASTQ-to-Unmapped-BAM:3.0.0 as FastqToUnmappedBam
 
 # import "MicrobialAlignmentPipeline.wdl" as AlignAndMarkDuplicates
 
 workflow MicrobialGenomePipeline {
 
   meta {
-    description: "Takes in a bam or fastq files, align to ref and shifted reference."
+    description: "Takes in a bam or fastq files, aligns to ref and shifted reference."
   }
 
   input {
-    File input_bam
-    File input_bam_index
     String sample_name
-
-    # Full reference is only requred if starting with a CRAM (BAM doesn't need these files)
     File ref_fasta
     File ref_fasta_index
     File ref_dict
@@ -26,8 +24,26 @@ workflow MicrobialGenomePipeline {
     File ref_pac
     File ref_sa
      
+    # inputs required when starting from bam file
+    File? input_bam
+    File? input_bam_index
+
+    # iputs required when starting from fastq files
+    File? input_fastq1
+    File? input_fastq2
+    String readgroup_name
+    String library_name
+    String platform_unit
+    String run_date
+    String platform_name
+    String sequencing_center
+    File? fastqunpaired
+
+    Int? num_dangling_bases
     String? m2_extra_args
     String? m2_filter_extra_args
+    Boolean? make_bamout
+  
 
     #Optional runtime arguments
     Int? preemptible_tries
@@ -56,15 +72,51 @@ workflow MicrobialGenomePipeline {
     preemptible_tries = preemptible_tries
   }
 
-  call RevertSam {
-    input:
-      input_bam = input_bam,
-      preemptible_tries = preemptible_tries
+# only for bam input
+  if (defined(input_bam)) {
+    call RevertSam {
+      input:
+        input_bam = input_bam,
+        preemptible_tries = preemptible_tries
+    }
+
+    call SamToFastq {
+      input:
+        inputBam = input_bam,
+        sampleName = sample_name,
+        memoryGb = 4,
+        diskSpaceGb = 100 # TODO see if we can do computations on the input_bam size here
+    }
   }
 
+  if (defined(input_fastq1) && defined(input_fastq2)) {
+    call FastqToUnmappedBam {
+      input:
+        sample_name = sample_name,
+        fastq_1 = input_fastq1,
+        fastq_2 = input_fastq1,
+        readgroup_name = ,
+        library_name = ,
+        platform_unit = ,
+        run_date = ,
+        platform_name = ,
+        sequencing_center = ,
+        gatk_path = "gatk",
+        docker = gatk_docker_override
+    }
+  }
+
+File? fastq1 = select_first([input_fastq1, SamToFastq.fastq1])
+File? fastq2 = select_first([input_fastq1, SamToFastq.fastq2])
+File? ubam = select_first([RevertSam.unmapped_bam, FastqToUnmappedBam.output_unmapped_bam])
+Int num_dangling_bases = select_first([num_dangling_bases, 3])
+
+# pass in 2 fastq files and unmapped bam
   call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToRef {
     input:
-      input_bam = RevertSam.unmapped_bam,
+      unmapped_bam = ubam,
+      fastq1 = fastq1,
+      fastq2 = fastq2,
       ref_dict = ref_dict,
       ref_fasta = ref_fasta,
       ref_fasta_index = ref_fasta_index,
@@ -78,7 +130,9 @@ workflow MicrobialGenomePipeline {
 
   call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToShiftedRef {
     input:
-      input_bam = RevertSam.unmapped_bam,
+      unmapped_bam = ubam,
+      fastq1 = fastq1,
+      fastq2 = fastq2,
       ref_dict = ShiftReference.shifted_ref_dict,
       ref_fasta = ShiftReference.shifted_ref_fasta,
       ref_fasta_index = ShiftReference.shifted_ref_fasta_index,
@@ -90,17 +144,6 @@ workflow MicrobialGenomePipeline {
       preemptible_tries = preemptible_tries
   }
 
-  # call CollectWgsMetrics {
-  #   input:
-  #     input_bam = AlignToMt.mt_aligned_bam,
-  #     input_bam_index = AlignToMt.mt_aligned_bai,
-  #     ref_fasta = mt_fasta,
-  #     ref_fasta_index = mt_fasta_index,
-  #     read_length = max_read_length,
-  #     coverage_cap = 100000,
-  #     preemptible_tries = preemptible_tries
-  # }
-
   call M2 as CallM2 {
     input:
       input_bam = AlignToRef.aligned_bam,
@@ -109,9 +152,9 @@ workflow MicrobialGenomePipeline {
       ref_fai = ref_fasta_index,
       ref_dict = ref_dict,
       intervals = ShiftReference.unshifted_intervals,
+      num_dangling_bases = num_dangling_bases,
+      make_bamout = make_bamout,
       gatk_override = gatk_override,
-      # Everything is called except the control region.
-      # m2_extra_args = select_first([m2_extra_args, ""]) + " -L chrM:576-16024 ",
       preemptible_tries = preemptible_tries
   }
 
@@ -123,9 +166,9 @@ workflow MicrobialGenomePipeline {
       ref_fai = ShiftReference.shifted_ref_fasta_index,
       ref_dict = ShiftReference.shifted_ref_dict,
       intervals = ShiftReference.shifted_intervals,
+      num_dangling_bases = num_dangling_bases,
+      make_bamout = make_bamout,
       gatk_override = gatk_override,
-      # Everything is called except the control region.
-      # m2_extra_args = select_first([m2_extra_args, ""]) + " -L chrM:8025-9144 ",
       preemptible_tries = preemptible_tries
   }
 
@@ -148,25 +191,6 @@ workflow MicrobialGenomePipeline {
       preemptible_tries = preemptible_tries
   }
 
-  # This is a temporary task to handle "joint calling" until Mutect2 can produce a GVCF.
-  # This proivdes coverage at each base so low coverage sites can be considered ./. rather than 0/0.
-  # call CoverageAtEveryBase {
-  #   input:
-  #     input_bam_regular_ref = AlignToRef.aligned_bam,
-  #     input_bam_regular_ref_index = AlignToRef.aligned_bai,
-  #     input_bam_shifted_ref = AlignToShiftedRef.aligned_bam,
-  #     input_bam_shifted_ref_index = AlignToShiftedRef.aligned_bai,
-  #     shiftback_chain = ShiftReference.shiftback_chain,
-  #     control_region_shifted_reference_interval_list = control_region_shifted_reference_interval_list,
-  #     non_control_region_interval_list = non_control_region_interval_list,
-  #     ref_fasta = ref_fasta,
-  #     ref_fasta_index = ref_fasta_index,
-  #     ref_dict = ref_dict,
-  #     shifted_ref_fasta = shifted_ref_fasta,
-  #     shifted_ref_fasta_index = shifted_ref_fasta_index,
-  #     shifted_ref_dict = shifted_ref_dict
-  # }
-
   output {
     File final_vcf = LiftoverAndCombineVcfs.final_vcf
     File final_vcf_index = LiftoverAndCombineVcfs.final_vcf_index
@@ -181,6 +205,7 @@ workflow MicrobialGenomePipeline {
     File shifted_ref_sa = IndexShiftedRef.ref_sa
   }
 }
+
 
 task ShiftReference {
   input {
@@ -310,85 +335,6 @@ task RevertSam {
   }
 }
 
-# task CoverageAtEveryBase {
-#   input {
-#     File input_bam_regular_ref
-#     File input_bam_regular_ref_index
-#     File input_bam_shifted_ref
-#     File input_bam_shifted_ref_index
-#     File shiftback_chain
-#     File control_region_shifted_reference_interval_list
-#     File non_control_region_interval_list
-#     File ref_fasta
-#     File ref_fasta_index
-#     File ref_dict
-#     File shifted_ref_fasta
-#     File shifted_ref_fasta_index
-#     File shifted_ref_dict
-
-#     Int? preemptible_tries
-#   }
-#   Int disk_size = ceil(size(input_bam_regular_ref, "GB") + size(input_bam_shifted_ref, "GB") + size(ref_fasta, "GB") * 2) + 20
-
-#   meta {
-#     description: "Remove this hack once there's a GVCF solution."
-#   }
-#   command <<<
-#     set -e
-
-#     java -jar /usr/gitc/picard.jar CollectHsMetrics \
-#       I=~{input_bam_regular_ref} \
-#       R=~{ref_fasta} \
-#       PER_BASE_COVERAGE=non_control_region.tsv \
-#       O=non_control_region.metrics \
-#       TI=~{non_control_region_interval_list} \
-#       BI=~{non_control_region_interval_list} \
-#       COVMAX=20000 \
-#       SAMPLE_SIZE=1
-
-#     java -jar /usr/gitc/picard.jar CollectHsMetrics \
-#       I=~{input_bam_shifted_ref} \
-#       R=~{shifted_ref_fasta} \
-#       PER_BASE_COVERAGE=control_region_shifted.tsv \
-#       O=control_region_shifted.metrics \
-#       TI=~{control_region_shifted_reference_interval_list} \
-#       BI=~{control_region_shifted_reference_interval_list} \
-#       COVMAX=20000 \
-#       SAMPLE_SIZE=1
-
-#     R --vanilla <<CODE
-#       shift_back = function(x) {
-#         if (x < 8570) {
-#           return(x + 8000)
-#         } else {
-#           return (x - 8569)
-#         }
-#       }
-
-#       control_region_shifted = read.table("control_region_shifted.tsv", header=T)
-#       shifted_back = sapply(control_region_shifted[,"pos"], shift_back)
-#       control_region_shifted[,"pos"] = shifted_back
-
-#       beginning = subset(control_region_shifted, control_region_shifted[,'pos']<8000)
-#       end = subset(control_region_shifted, control_region_shifted[,'pos']>8000)
-
-#       non_control_region = read.table("non_control_region.tsv", header=T)
-#       combined_table = rbind(beginning, non_control_region, end)
-#       write.table(combined_table, "per_base_coverage.tsv", row.names=F, col.names=T, quote=F, sep="\t")
-
-#     CODE
-#   >>>
-#   runtime {
-#     disks: "local-disk " + disk_size + " HDD"
-#     memory: "1200 MB"
-#     docker: "us.gcr.io/broad-gotc-prod/genomes-in-the-cloud:2.4.2-1552931386"
-#     preemptible: select_first([preemptible_tries, 5])
-#   }
-#   output {
-#     File table = "per_base_coverage.tsv"
-#   }
-# }
-
 task LiftoverAndCombineVcfs {
   input {
     File shifted_vcf
@@ -409,13 +355,13 @@ task LiftoverAndCombineVcfs {
   Int disk_size = ceil(size(shifted_vcf, "GB") + ref_size) + 20
 
   meta {
-    description: "Lifts over shifted vcf of control region and combines it with the rest of the chrM calls."
+    description: "Lifts over shifted vcf of the interval region and combines it with the unshifted vcf."
   }
   parameter_meta {
-    shifted_vcf: "VCF of control region on shifted reference"
-    vcf: "VCF of the rest of chrM on original reference"
-    ref_fasta: "Original (not shifted) chrM reference"
-    shiftback_chain: "Chain file to lift over from shifted reference to original chrM"
+    shifted_vcf: "VCF of the shifted interval region on shifted reference"
+    vcf: "VCF of the unshifted interval region on original reference"
+    ref_fasta: "Original (not shifted) reference"
+    shiftback_chain: "Chain file to lift over from shifted reference to original reference"
   }
   command<<<
     set -e
@@ -454,6 +400,7 @@ task M2 {
     File input_bam
     File input_bai
     File intervals
+    Int num_dangling_bases
     String? m2_extra_args
     Boolean? make_bamout
     File? gga_vcf
@@ -498,7 +445,8 @@ task M2 {
         ~{true='--bam-output bamout.bam' false='' make_bamout} \
         ~{m2_extra_args} \
         --annotation StrandBiasBySample \
-        --mitochondria-mode \
+        --microbial-mode \
+        --num-matching-bases-in-dangling-end-to-recover num_dangling_bases \
         --max-reads-per-alignment-start 75 \
         --max-mnp-distance 0
   >>>

@@ -7,9 +7,10 @@ workflow MicrobialAlignmentPipeline {
   }
 
   input {
-    File input_bam
-    String basename = basename(input_bam, ".bam")
-
+    File unmapped_bam
+    File fastq1
+    File fastq2
+    String basename = basename(unmapped_bam, ".bam")
     File ref_dict
     File ref_fasta
     File ref_fasta_index
@@ -32,7 +33,9 @@ workflow MicrobialAlignmentPipeline {
 
   call AlignAndMarkDuplicates {
     input:
-      input_bam = input_bam,
+      unmapped_bam = unmapped_bam,
+      fastq1 = fastq1,
+      fastq2 = fastq2,
       bwa_version = GetBwaVersion.version,
       output_bam_basename = basename + ".realigned",
       ref_fasta = ref_fasta,
@@ -56,7 +59,9 @@ workflow MicrobialAlignmentPipeline {
 
 task AlignAndMarkDuplicates {
   input {
-    File input_bam
+    File unmapped_bam
+    File fastq1
+    File fastq2
     String bwa_commandline = "bwa mem -K 100000000 -p -v 3 -t 2 -Y $bash_ref_fasta"
     String bwa_version
     String output_bam_basename
@@ -74,11 +79,11 @@ task AlignAndMarkDuplicates {
     Int? preemptible_tries
   }
 
-  String basename = basename(input_bam, ".bam")
+  String basename = basename(unmapped_bam, ".bam")
   String local_ref_fasta = basename(ref_fasta)
   String metrics_filename = basename + ".metrics"
   Float ref_size = size(ref_fasta, "GB") + size(ref_fasta_index, "GB")
-  Int disk_size = ceil(size(input_bam, "GB") * 5 + ref_size) + 20
+  Int disk_size = ceil(size(unmapped_bam, "GB") * 5 + ref_size) + 20
 
   meta {
     description: "Aligns with BWA and MergeBamAlignment, then Marks Duplicates. Outputs a coordinate sorted bam."
@@ -90,7 +95,7 @@ task AlignAndMarkDuplicates {
   command <<<
     set -o pipefail
     set -e
-    set -x
+    #set -x
 
     cp ~{ref_fasta} .
     cp ~{ref_fasta_index} .
@@ -100,21 +105,13 @@ task AlignAndMarkDuplicates {
     cp ~{ref_bwt} .
     cp ~{ref_pac} .
     cp ~{ref_sa} .
-
-    ls -al
-    
+  
     # set the bash variable needed for the command-line
     # /usr/gitc/bwa index ~{ref_fasta}
      
     bash_ref_fasta=~{local_ref_fasta}
     # echo "ref_fasta=$bash_ref_fasta"
-    java -Xms5000m -jar /usr/gitc/picard.jar \
-      SamToFastq \
-      INPUT=~{input_bam} \
-      FASTQ=~{basename}.fastq \
-      INTERLEAVE=true \
-      NON_PF=true
-    /usr/gitc/~{bwa_commandline} ~{basename}.fastq 2> >(tee ~{output_bam_basename}.bwa.stderr.log >&2) > ~{basename}.realigned_bam
+      /usr/gitc/~{bwa_commandline} ~{fastq1} ~{fastq2} 2> >(tee ~{output_bam_basename}.bwa.stderr.log >&2) > ~{basename}.realigned_bam
      java -Xms3000m -jar /usr/gitc/picard.jar \
       MergeBamAlignment \
       VALIDATION_STRINGENCY=SILENT \
@@ -123,7 +120,7 @@ task AlignAndMarkDuplicates {
       ATTRIBUTES_TO_REMOVE=NM \
       ATTRIBUTES_TO_REMOVE=MD \
       ALIGNED_BAM=~{basename}.realigned_bam \
-      UNMAPPED_BAM=~{input_bam} \
+      UNMAPPED_BAM=~{unmapped_bam} \
       OUTPUT=mba.bam \
       REFERENCE_SEQUENCE=~{local_ref_fasta} \
       PAIRED_RUN=true \
@@ -176,7 +173,6 @@ task AlignAndMarkDuplicates {
     File output_bam_index = "~{output_bam_basename}.bai"
     File bwa_stderr_log = "~{output_bam_basename}.bwa.stderr.log"
     File duplicate_metrics = "~{metrics_filename}"
-    File fastq = "~{basename}.fastq"
   }
 }
 
