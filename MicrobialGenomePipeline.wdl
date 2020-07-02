@@ -518,7 +518,7 @@ task Filter {
 
       gatk --java-options "-Xmx2500m" FilterMutectCalls -V ~{raw_vcf} \
         -R ~{ref_fasta} \
-        -O filtered.vcf \
+        -O ~{output_vcf} \
         --stats ~{raw_vcf_stats} \
         ~{m2_extra_filtering_args} \
         --microbial-mode 
