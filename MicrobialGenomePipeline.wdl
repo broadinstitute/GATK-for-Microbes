@@ -217,6 +217,8 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
     File shifted_ref_bwt = IndexShiftedRef.ref_bwt
     File shifted_ref_pac = IndexShiftedRef.ref_pac
     File shifted_ref_sa = IndexShiftedRef.ref_sa
+    File bamout_bam = CallM2.output_bamout
+    File shifted_bamout_bam = CallShiftedM2.output_bamout
   }
 }
 
@@ -474,7 +476,7 @@ task M2 {
       File raw_vcf = "~{output_vcf}"
       File raw_vcf_idx = "~{output_vcf_index}"
       File stats = "~{output_vcf}.stats"
-      File output_bamOut = "bamout.bam"
+      File output_bamout = "bamout.bam"
   }
 }
 
