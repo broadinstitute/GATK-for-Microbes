@@ -464,8 +464,7 @@ task M2 {
         ~{m2_extra_args} \
         --annotation StrandBiasBySample \
         --num-matching-bases-in-dangling-end-to-recover 1 \
-        --max-reads-per-alignment-start 75 \
-        --max-mnp-distance 0
+        --max-reads-per-alignment-start 75 
   >>>
   runtime {
       docker: "us.gcr.io/broad-gatk/gatk:4.1.7.0"
