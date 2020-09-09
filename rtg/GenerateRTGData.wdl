@@ -18,7 +18,8 @@ workflow GenerateRTGData {
 
   call ProcessVcf as ProcessBaselineVcf {
     input:
-      sample_vcf=baseline_vcf
+      sample_vcf=baseline_vcf,
+      preemptible_tries = preemptible_tries
   }
 
   scatter (vcf in sample_vcfs) {
@@ -38,7 +39,8 @@ workflow GenerateRTGData {
 
   call GeneratePlots {
     input:
-      EvalVcf.weighted_roc_file
+      weighted_roc_files = EvalVcf.weighted_roc_file,
+      preemptible_tries = preemptible_tries
   }
 }
 
