@@ -1,0 +1,7 @@
+{
+  "GenerateRTGData.truth_fasta": "File",
+  "GenerateRTGData.baseline_vcf": "File",
+  "GenerateRTGData.sample_vcfs": "Array[File]",
+  "GenerateRTGData.preemptible_tries": "Int? (optional)"
+}
+
