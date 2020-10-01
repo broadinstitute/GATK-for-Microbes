@@ -37,11 +37,15 @@ workflow MicrobialGenomePipeline {
     String? sequencing_center
     File? fastqunpaired
 
-    Int? num_dangling_bases
     String? m2_extra_args
     String? m2_filter_extra_args
     Boolean? make_bamout
-  
+    Int? num_dangling_bases
+    Int? max_reads_alignment_start
+    Int? max_mnp_distance
+    Int? assembly_region_padding
+    Boolean? linked_de_bruijn_graph
+
 
     #Optional runtime arguments
     Int? preemptible_tries
@@ -105,7 +109,11 @@ workflow MicrobialGenomePipeline {
 File fastq1 = select_first([input_fastq1, SamToFastq.fastq1])
 File fastq2 = select_first([input_fastq1, SamToFastq.fastq2])
 File ubam = select_first([RevertSam.unmapped_bam, FastqToUnmappedBam.output_unmapped_bam])
-Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
+Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
+Int max_reads_alignment_start_with_default = select_first([max_reads_alignment_start, 75])
+Int max_mnp_distance_with_default = select_first([max_mnp_distance, 0])
+Int assembly_region_padding_with_default = select_first([assembly_region_padding, 500])
+Boolean linked_de_bruijn_graph_with_default = select_first([linked_de_bruijn_graph, true])
 
 # pass in 2 fastq files and unmapped bam
   call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToRef {
@@ -149,7 +157,12 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
       ref_dict = ref_dict,
       intervals = ShiftReference.unshifted_intervals,
       num_dangling_bases = num_dangling_bases_with_default,
+      max_reads_alignment_start = max_reads_alignment_start_with_default,
+      max_mnp_distance = max_mnp_distance_with_default,
+      assembly_region_padding = assembly_region_padding_with_default,
+      linked_de_bruijn_graph = linked_de_bruijn_graph_with_default,
       make_bamout = make_bamout,
+      m2_extra_args = m2_extra_args,
       gatk_override = gatk_override,
       preemptible_tries = preemptible_tries
   }
@@ -163,7 +176,12 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
       ref_dict = ShiftReference.shifted_ref_dict,
       intervals = ShiftReference.shifted_intervals,
       num_dangling_bases = num_dangling_bases_with_default,
+      max_reads_alignment_start = max_reads_alignment_start_with_default,
+      max_mnp_distance = max_mnp_distance_with_default,
+      assembly_region_padding = assembly_region_padding_with_default,
+      linked_de_bruijn_graph = linked_de_bruijn_graph_with_default,
       make_bamout = make_bamout,
+      m2_extra_args = m2_extra_args,
       gatk_override = gatk_override,
       preemptible_tries = preemptible_tries
   }
@@ -419,6 +437,10 @@ task M2 {
     File input_bai
     File intervals
     Int num_dangling_bases
+    Int max_reads_alignment_start
+    Int max_mnp_distance
+    Int assembly_region_padding
+    Boolean linked_de_bruijn_graph
     String? m2_extra_args
     Boolean? make_bamout
     File? gga_vcf
@@ -462,10 +484,12 @@ task M2 {
         -L ~{intervals} \
         ~{true='--bam-output bamout.bam' false='' make_bamout} \
         ~{m2_extra_args} \
-        --annotation StrandBiasBySample \
-        --num-matching-bases-in-dangling-end-to-recover 1 \
-        --max-reads-per-alignment-start 75 \
-        --max-mnp-distance 0
+        --num-matching-bases-in-dangling-end-to-recover ~{num_dangling_bases} \
+        --max-reads-per-alignment-start ~{max_reads_alignment_start} \
+        --max-mnp-distance ~{max_mnp_distance} \
+        --assembly-region-padding ~{assembly_region_padding} \
+        --linked-de-bruijn-graph ~{linked_de_bruijn_graph}
+
   >>>
   runtime {
       docker: "us.gcr.io/broad-gatk/gatk:4.1.7.0"
