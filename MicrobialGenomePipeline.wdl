@@ -35,7 +35,6 @@ workflow MicrobialGenomePipeline {
     String? run_date
     String? platform_name
     String? sequencing_center
-    File? fastqunpaired
 
     String? m2_extra_args
     String? m2_filter_extra_args
@@ -97,12 +96,12 @@ workflow MicrobialGenomePipeline {
         sample_name = sample_name,
         fastq_1 = select_first([input_fastq1, ""]),
         fastq_2 = select_first([input_fastq1, ""]),
-        readgroup_name = select_first([readgroup_name, ""]),
-        library_name = select_first([library_name, ""]),
-        platform_unit = select_first([platform_unit, ""]),
-        run_date = select_first([run_date, ""]),
-        platform_name = select_first([platform_name, ""]),
-        sequencing_center = select_first([sequencing_center, ""])
+        readgroup_name = select_first([readgroup_name, "default_readgroup"]),
+        library_name = select_first([library_name, "default_library"]),
+        platform_unit = select_first([platform_unit, "default_platform_unit"]),
+        run_date = select_first([run_date, "default_rundate"]),
+        platform_name = select_first([platform_name, "default_platform_name"]),
+        sequencing_center = select_first([sequencing_center, "default_sequencing_center"])
     }
   }
 
