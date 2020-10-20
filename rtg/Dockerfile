@@ -13,5 +13,5 @@ RUN cd /rtg-tools && \
     ant zip-nojre
 RUN unzip /rtg-tools/build/rtg-tools-3.11-39691f9f-base.zip
 
-RUN export PATH=$PATH:/rtg-tools-3.11-39691f9f/
+ENV PATH="$PATH:/rtg-tools-3.11-39691f9f"
 

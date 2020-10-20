@@ -50,11 +50,12 @@ task PrepTruthData {
     Int? preemptible_tries
   }
 
-  String basename = basename(basename(truth_fasta, "sta"), "fa")
+  String basename = basename(basename(truth_fasta, "sta"), ".fa")
   Int disk_size = ceil(size(truth_fasta, "GB")) + 20
 
   command <<<
     rtg format -o ~{basename}.sdf ~{truth_fasta}
+    ls -al
   >>>
   
   output {
@@ -62,7 +63,7 @@ task PrepTruthData {
   }
 
   runtime {
-      docker: "us.gcr.io/broad-dsde-methods/rtg:3.11"
+      docker: "us.gcr.io/broad-dsde-methods/rtg:3.11_091520"
       memory: "10 GB"
       disks: "local-disk " + disk_size + " HDD"
       preemptible: select_first([preemptible_tries, 5])
@@ -89,7 +90,7 @@ task ProcessVcf {
   }
 
   runtime {
-      docker: "us.gcr.io/broad-dsde-methods/rtg:3.11"
+      docker: "us.gcr.io/broad-dsde-methods/rtg:3.11_091520"
       memory: "10 GB"
       disks: "local-disk " + disk_size + " HDD"
       preemptible: select_first([preemptible_tries, 5])
@@ -119,7 +120,7 @@ task EvalVcf {
   }
 
   runtime {
-      docker: "us.gcr.io/broad-dsde-methods/rtg:3.11"
+      docker: "us.gcr.io/broad-dsde-methods/rtg:3.11_091520"
       memory: "10 GB"
       disks: "local-disk " + disk_size + " HDD"
       preemptible: select_first([preemptible_tries, 5])
@@ -145,7 +146,7 @@ task GeneratePlots {
   }
 
   runtime {
-      docker: "us.gcr.io/broad-dsde-methods/rtg:3.11"
+      docker: "us.gcr.io/broad-dsde-methods/rtg:3.11_091520"
       memory: "10 GB"
       disks: "local-disk " + 100 + " HDD"
       preemptible: select_first([preemptible_tries, 5])
