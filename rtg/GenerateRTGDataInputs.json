@@ -1,0 +1,6 @@
+{
+  "GenerateRTGData.truth_fasta": "gs://gatk-for-bacteria/vcfeval/Mycobacterium_tuberculosis_H37Rv.fasta",
+  "GenerateRTGData.baseline_vcf": "gs://gatk-for-bacteria/vcfeval/pilon.vcf",
+  "GenerateRTGData.sample_vcfs": ["gs://gatk-for-bacteria/vcfeval/mtb_OnlyLinked.vcf", "gs://gatk-for-bacteria/vcfeval/mtb_ah_branch.vcf", "gs://gatk-for-bacteria/vcfeval/mtb_withOnlyPadding.vcf"]
+}
+
