@@ -32,6 +32,7 @@ workflow MicrobialGenomePipeline {
     String? readgroup_name
     String? library_name
     String? platform_unit
+    String? run_date
     String? platform_name
     String? sequencing_center
     File? fastqunpaired
@@ -95,6 +96,7 @@ workflow MicrobialGenomePipeline {
         readgroup_name = select_first([readgroup_name, ""]),
         library_name = select_first([library_name, ""]),
         platform_unit = select_first([platform_unit, ""]),
+	run_date = select_first([run_date, "0000-00-00"]),
         platform_name = select_first([platform_name, ""]),
         sequencing_center = select_first([sequencing_center, ""])
     }
