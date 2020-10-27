@@ -10,27 +10,40 @@ workflow GenerateRTGData {
     Int? preemptible_tries
   }
 
-  call ProcessVcf as ProcessBaselineVcf {
+  call IndexReference {
+    input:
+      ref_fasta=truth_fasta
+  }
+
+  call BGZipVcf as ProcessBaselineVcf {
     input:
       sample_vcf=baseline_vcf,
       preemptible_tries = preemptible_tries
   }
 
   scatter (vcf in sample_vcfs) {
-      call ProcessVcf {
+      call BGZipVcf {
         input:
           sample_vcf = vcf,
           preemptible_tries = preemptible_tries
     }
-  }
+    call GATKConcordance {
+      input:
+        ref_fasta=truth_fasta,
+        ref_fasta_index=IndexReference.ref_fasta_fai,
+        ref_dict=IndexReference.ref_dict,
+        input_vcf=BGZipVcf.vcf_gz,
+        truth_vcf=ProcessBaselineVcf.vcf_gz
+    }
+ }
 
   call EvalVcf {
     input:
       truth_fasta=truth_fasta,
       baseline_vcf_gz = ProcessBaselineVcf.vcf_gz,
       baseline_vcf_gz_index = ProcessBaselineVcf.vcf_gz_index,
-      sample_vcf_gz_list = ProcessVcf.vcf_gz,
-      sample_vcf_gz_index_list = ProcessVcf.vcf_gz_index,
+      sample_vcf_gz_list = BGZipVcf.vcf_gz,
+      sample_vcf_gz_index_list = BGZipVcf.vcf_gz_index,
       preemptible_tries = preemptible_tries
 }
 
@@ -39,10 +52,11 @@ workflow GenerateRTGData {
       weighted_roc_files = EvalVcf.weighted_roc_files,
       preemptible_tries = preemptible_tries
   }
+
 }
 
 
-task ProcessVcf {
+task BGZipVcf {
   input {
     File sample_vcf
      # runtime
@@ -50,17 +64,20 @@ task ProcessVcf {
   }
 
   Int disk_size = ceil(size(sample_vcf, "GB")) + 20
-  String basename = basename(sample_vcf)
+  String local_vcf = basename(sample_vcf)
+  String vcf = basename(local_vcf, ".gz")
   
   command <<<
-    ln -s ~{sample_vcf} ~{basename}
-    bgzip ~{basename}
-    tabix -p vcf ~{basename}.gz
+    ln -s ~{sample_vcf} ~{local_vcf}
+    # this will unzip if it is zipped (we specifically need a bgzip, not just gzip)
+    gunzip ~{local_vcf} -q
+    bgzip ~{vcf}
+    tabix -p vcf ~{vcf}.gz
   >>>
   
   output {
-    File vcf_gz = "~{basename}.gz"
-    File vcf_gz_index = "~{basename}.gz.tbi"
+    File vcf_gz = "~{vcf}.gz"
+    File vcf_gz_index = "~{vcf}.gz.tbi"
   }
 
   runtime {
@@ -139,6 +156,69 @@ task GeneratePlots {
       disks: "local-disk " + 50 + " HDD"
       preemptible: select_first([preemptible_tries, 5])
       cpu: 1
+  }
+}
+
+task GATKConcordance {
+  input {
+    File ref_fasta
+    File ref_fasta_index
+    File ref_dict
+    File input_vcf
+    File truth_vcf
+    Int? preemptible_tries
+    File? gatk_override
+    String? gatk_docker_override
+  }
+
+  String output_tsv = basename(basename(input_vcf, ".gz"), ".vcf") + "_concordance_summary.tsv" 
+
+  command {
+    set -e
+    export GATK_LOCAL_JAR=~{default="/root/gatk.jar" gatk_override}
+    gatk Concordance \
+      -R ~{ref_fasta} \
+      -eval ~{input_vcf} \
+      --truth ~{truth_vcf} \
+      --summary ~{output_tsv}
+  }
+  output {
+    File concordance_tsv = "~{output_tsv}"
+  }
+  runtime {
+      docker: select_first([gatk_docker_override, "us.gcr.io/broad-gatk/gatk:4.1.7.0"])
+      memory: "3 MB"
+      disks: "local-disk 20 HDD"
+      preemptible: select_first([preemptible_tries, 5])
+  } 
+}
+
+task IndexReference {
+  input {
+    File ref_fasta    
+    Int? preemptible_tries
+  }
+
+  Int disk_size = ceil(size(ref_fasta, "GB") * 2.5) + 20
+  String fasta = basename(ref_fasta)
+  String basename = basename(basename(basename(fasta, ".gz"), "sta"), ".fa") 
+  command <<<
+      set -e
+      ln -s ~{ref_fasta} ~{fasta}
+      samtools faidx ~{fasta}
+      samtools dict ~{fasta} > ~{basename}.dict
+      ls -al
+  >>>
+  runtime {
+    preemptible: select_first([preemptible_tries, 5])
+    memory: "2 GB"
+    disks: "local-disk " + disk_size + " HDD"
+    docker: "us.gcr.io/broad-gotc-prod/genomes-in-the-cloud:2.4.2-1552931386"
+  }
+
+  output {
+    File ref_dict = "~{basename}.dict"
+    File ref_fasta_fai = "~{basename}.fasta.fai"
   }
 }
 
