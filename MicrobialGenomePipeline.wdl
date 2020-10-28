@@ -398,7 +398,7 @@ task LiftoverAndCombineVcfs {
     >>>
     runtime {
       disks: "local-disk " + disk_size + " HDD"
-      memory: "1 GB"
+      memory: "5 GB"
       docker: "us.gcr.io/broad-gotc-prod/genomes-in-the-cloud:2.4.2-1552931386"
       preemptible: select_first([preemptible_tries, 5])
     }
