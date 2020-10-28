@@ -211,13 +211,14 @@ task IndexReference {
   }
 
   Int disk_size = ceil(size(ref_fasta, "GB") * 2.5) + 20
-  String fasta = basename(ref_fasta)
-  String basename = basename(basename(basename(fasta, ".gz"), "sta"), ".fa") 
+  String fasta_nopath = basename(ref_fasta)
+  String fasta_with_suffix = basename(fasta_nopath, ".gz")
+  String basename = basename(basename(fasta_with_suffix, "sta"), ".fa") 
   command <<<
       set -e
-      ln -s ~{ref_fasta} ~{fasta}
-      samtools faidx ~{fasta}
-      samtools dict ~{fasta} > ~{basename}.dict
+      ln -s ~{ref_fasta} ~{fasta_nopath}
+      samtools faidx ~{fasta_nopath}
+      samtools dict ~{fasta_nopath} > ~{basename}.dict
       ls -al
   >>>
   runtime {
@@ -229,7 +230,7 @@ task IndexReference {
 
   output {
     File ref_dict = "~{basename}.dict"
-    File ref_fasta_fai = "~{basename}.fasta.fai"
+    File ref_fasta_fai = "~{fasta_with_suffix}.fai"
   }
 }
 
