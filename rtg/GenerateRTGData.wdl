@@ -33,7 +33,9 @@ workflow GenerateRTGData {
         ref_fasta_index=IndexReference.ref_fasta_fai,
         ref_dict=IndexReference.ref_dict,
         input_vcf=BGZipVcf.vcf_gz,
-        truth_vcf=ProcessBaselineVcf.vcf_gz
+        input_vcf_idx=BGZipVcf.vcf_gz_index,
+        truth_vcf=ProcessBaselineVcf.vcf_gz,
+        truth_vcf_idx=ProcessBaselineVcf.vcf_gz_index
     }
  }
 
@@ -165,19 +167,28 @@ task GATKConcordance {
     File ref_fasta_index
     File ref_dict
     File input_vcf
+    File input_vcf_idx
     File truth_vcf
+    File truth_vcf_idx
     Int? preemptible_tries
     File? gatk_override
     String? gatk_docker_override
   }
 
   String output_tsv = basename(basename(input_vcf, ".gz"), ".vcf") + "_concordance_summary.tsv" 
+  String base_fasta = basename(ref_fasta)
+  String base_fai = basename(ref_fasta_index)
+  String base_dict = basename(ref_dict)
 
   command {
     set -e
+    ln -s ~{ref_fasta_index} ~{base_fasta}
+    ln -s ~{ref_fasta_index} ~{base_fai}
+    ln -s ~{ref_dict} ~{base_dict}
+
     export GATK_LOCAL_JAR=~{default="/root/gatk.jar" gatk_override}
     gatk Concordance \
-      -R ~{ref_fasta} \
+      -R ~{base_fasta} \
       -eval ~{input_vcf} \
       --truth ~{truth_vcf} \
       --summary ~{output_tsv}
