@@ -55,6 +55,11 @@ workflow GenerateRTGData {
       preemptible_tries = preemptible_tries
   }
 
+  output {
+      Array[File] gatk_concordance_summary_files = GATKConcordance.concordance_tsv
+      Array[File] weighted_roc_files = EvalVcf.weighted_roc_files
+      File rocplot = GeneratePlots.rocplot
+  }
 }
 
 
