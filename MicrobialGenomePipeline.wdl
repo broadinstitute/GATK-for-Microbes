@@ -170,11 +170,11 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
       preemptible_tries = preemptible_tries
   }
 
-if (make_bamout) {
+if (defined(make_bamout) && make_bamout) {
   call ShiftBackBam {
     input:
-      bam = CallShiftedM2.bamout,
-      shiftback_chain = ShiftFasta.shiftback_chain,
+      bam = CallShiftedM2.output_bamout,
+      shiftback_chain = ShiftReference.shiftback_chain,
       preemptible_tries = preemptible_tries
 
   }
