@@ -174,7 +174,9 @@ if (make_bamout) {
   call ShiftBackBam {
     input:
       bam = CallShiftedM2.bamout,
-      shiftback_chain = ShiftFasta.shiftback_chain
+      shiftback_chain = ShiftFasta.shiftback_chain,
+      preemptible_tries = preemptible_tries
+
   }
 }
   call LiftoverAndCombineVcfs {
@@ -579,6 +581,7 @@ task ShiftBackBam {
   input {
     File bam
     File shiftback_chain
+    Int? preemptible_tries
   }
 
   command <<<
