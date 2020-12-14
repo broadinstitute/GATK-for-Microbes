@@ -170,6 +170,13 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
       preemptible_tries = preemptible_tries
   }
 
+if (make_bamout) {
+  call ShiftBackBam {
+    input:
+      bam = CallShiftedM2.bamout,
+      shiftback_chain = ShiftFasta.shiftback_chain
+  }
+}
   call LiftoverAndCombineVcfs {
     input:
       shifted_vcf = CallShiftedM2.raw_vcf,
@@ -221,8 +228,9 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
     File shifted_ref_bwt = IndexShiftedRef.ref_bwt
     File shifted_ref_pac = IndexShiftedRef.ref_pac
     File shifted_ref_sa = IndexShiftedRef.ref_sa
-    File bamout_bam = CallM2.output_bamout
-    File shifted_bamout_bam = CallShiftedM2.output_bamout
+    File? bamout_bam = CallM2.output_bamout
+    File? shifted_bamout_bam = CallShiftedM2.output_bamout
+    File? shifted_back_bamout_bam = ShiftBackBam.bamout
   }
 }
 
@@ -564,5 +572,28 @@ task MergeStats {
       memory: "3 MB"
       disks: "local-disk 20 HDD"
       preemptible: select_first([preemptible_tries, 5])
+  }
+}
+
+task ShiftBackBam {
+  input {
+    File bam
+    File shiftback_chain
+  }
+
+  command <<<
+      set -e
+      CrossMap.py shiftback_chain bam "bamout"
+  >>>
+  runtime {
+    preemptible: select_first([preemptible_tries, 5])
+    memory: "2 GB"
+    disks: "local-disk 30 HDD"
+    docker: "us.gcr.io/broad-dsde-methods/gatk-for-microbes:crossmap_d4631de9db30"
+  }
+
+  output {
+    File bamout = "bamout.bam"
+    File bamout_bai = "bamout.bam.bai"
   }
 }
