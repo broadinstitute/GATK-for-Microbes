@@ -150,6 +150,7 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
       intervals = ShiftReference.unshifted_intervals,
       num_dangling_bases = num_dangling_bases_with_default,
       make_bamout = make_bamout,
+      m2_extra_args = m2_extra_args,
       gatk_override = gatk_override,
       preemptible_tries = preemptible_tries
   }
@@ -164,6 +165,7 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
       intervals = ShiftReference.shifted_intervals,
       num_dangling_bases = num_dangling_bases_with_default,
       make_bamout = make_bamout,
+      m2_extra_args = m2_extra_args,
       gatk_override = gatk_override,
       preemptible_tries = preemptible_tries
   }
