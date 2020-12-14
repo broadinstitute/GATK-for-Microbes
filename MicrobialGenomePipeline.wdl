@@ -586,7 +586,7 @@ task ShiftBackBam {
 
   command <<<
       set -e
-      CrossMap.py shiftback_chain bam "bamout"
+      CrossMap.py bam shiftback_chain bam bamout
   >>>
   runtime {
     preemptible: select_first([preemptible_tries, 5])
@@ -596,7 +596,7 @@ task ShiftBackBam {
   }
 
   output {
-    File bamout = "bamout.bam"
-    File bamout_bai = "bamout.bam.bai"
+    File bamout = "bamout.sorted.bam"
+    File bamout_bai = "bamout.sorted.bam.bai"
   }
 }
