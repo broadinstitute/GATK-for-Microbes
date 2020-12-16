@@ -108,7 +108,7 @@ workflow MicrobialGenomePipeline {
 File fastq1 = select_first([input_fastq1, SamToFastq.fastq1])
 File fastq2 = select_first([input_fastq1, SamToFastq.fastq2])
 File ubam = select_first([RevertSam.unmapped_bam, FastqToUnmappedBam.output_unmapped_bam])
-Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
+Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
 
 # pass in 2 fastq files and unmapped bam
   call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToRef {
