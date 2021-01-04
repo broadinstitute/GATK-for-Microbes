@@ -149,14 +149,14 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
         unmapped_bam = ubam,
         fastq1 = fastq1,
         fastq2 = fastq2,
-        ref_dict = ShiftReference.shifted_ref_dict,
-        ref_fasta = ShiftReference.shifted_ref_fasta,
-        ref_fasta_index = ShiftReference.shifted_ref_fasta_index,
-        ref_amb = IndexShiftedRef.ref_amb,
-        ref_ann = IndexShiftedRef.ref_ann,
-        ref_bwt = IndexShiftedRef.ref_bwt,
-        ref_pac = IndexShiftedRef.ref_pac,
-        ref_sa = IndexShiftedRef.ref_sa,
+        ref_dict = select_first([ShiftReference.shifted_ref_dict]),
+        ref_fasta = select_first([ShiftReference.shifted_ref_fasta]),
+        ref_fasta_index = select_first([ShiftReference.shifted_ref_fasta_index]),
+        ref_amb = select_first([IndexShiftedRef.ref_amb]),
+        ref_ann = select_first([IndexShiftedRef.ref_ann]),
+        ref_bwt = select_first([IndexShiftedRef.ref_bwt]),
+        ref_pac = select_first([IndexShiftedRef.ref_pac]),
+        ref_sa = select_first([IndexShiftedRef.ref_sa]),
         preemptible_tries = preemptible_tries
     }
 
@@ -164,9 +164,9 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
       input:
         input_bam = AlignToShiftedRef.aligned_bam,
         input_bai = AlignToShiftedRef.aligned_bai,
-        ref_fasta = ShiftReference.shifted_ref_fasta,
-        ref_fai = ShiftReference.shifted_ref_fasta_index,
-        ref_dict = ShiftReference.shifted_ref_dict,
+        ref_fasta = select_first([ShiftReference.shifted_ref_fasta]),
+        ref_fai = select_first([ShiftReference.shifted_ref_fasta_index]),
+        ref_dict = select_first([ShiftReference.shifted_ref_dict]),
         intervals = ShiftReference.shifted_intervals,
         num_dangling_bases = num_dangling_bases_with_default,
         make_bamout = make_bamout,
@@ -179,7 +179,7 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
       call ShiftBackBam {
         input:
           bam = CallShiftedM2.output_bamout,
-          shiftback_chain = ShiftReference.shiftback_chain,
+          shiftback_chain = select_first([ShiftReference.shiftback_chain]),
           preemptible_tries = preemptible_tries
 
       }
@@ -192,7 +192,7 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
         ref_fasta = ref_fasta,
         ref_fasta_index = ref_fasta_index,
         ref_dict = ref_dict,
-        shiftback_chain = ShiftReference.shiftback_chain,
+        shiftback_chain = select_first([ShiftReference.shiftback_chain]),
         preemptible_tries = preemptible_tries
     }
 
@@ -207,13 +207,13 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
 
   File raw_vcf = select_first([LiftoverAndCombineVcfs.final_vcf, CallM2.raw_vcf])
   File raw_vcf_idx = select_first([LiftoverAndCombineVcfs.final_vcf_index, CallM2.raw_vcf_idx])
-  File stats = select_first([MergeStats.stats, CallM2.stats])
+  File selected_stats = select_first([MergeStats.stats, CallM2.stats])
 
   call Filter {
     input:
       raw_vcf = raw_vcf,
       raw_vcf_index = raw_vcf_idx,
-      raw_vcf_stats = stats,
+      raw_vcf_stats = selected_stats,
       sample_name = sample_name,
       ref_fasta = ref_fasta,
       ref_fai = ref_fasta_index,
@@ -228,7 +228,7 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
   output {
     File final_vcf = raw_vcf
     File final_vcf_index = raw_vcf_idx
-    File stats = stats
+    File stats = selected_stats
     File filtered_vcf = Filter.filtered_vcf
     File filtered_vcf_idx = Filter.filtered_vcf_idx
     File unmapped_bam = ubam
@@ -441,7 +441,7 @@ task M2 {
     File ref_dict
     File input_bam
     File input_bai
-    File intervals
+    File? intervals
     Int num_dangling_bases
     String? m2_extra_args
     Boolean? make_bamout
@@ -483,7 +483,7 @@ task M2 {
         -I ~{input_bam} \
         ~{"--alleles " + gga_vcf} \
         -O ~{output_vcf} \
-        -L ~{intervals} \
+        ~{"-L " + intervals} \
         ~{true='--bam-output bamout.bam' false='' make_bamout} \
         ~{m2_extra_args} \
         --annotation StrandBiasBySample \
