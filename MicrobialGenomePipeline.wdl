@@ -41,7 +41,6 @@ workflow MicrobialGenomePipeline {
     String? m2_extra_args
     String? m2_filter_extra_args
     Boolean? make_bamout
-    Boolean circular_ref = false
   
 
     #Optional runtime arguments
@@ -56,21 +55,19 @@ workflow MicrobialGenomePipeline {
     sample_name: "Name of file in final output vcf"
   }
 
-  if (circular_ref) {
-    call ShiftReference {
-      input:
-        ref_fasta = ref_fasta,
-        ref_fasta_index = ref_fasta_index,
-        ref_dict = ref_dict,
-        preemptible_tries = preemptible_tries,
-        gatk_override = "gs://broad-dsp-spec-ops/scratch/andrea/gatk-package-shiftfasta.jar"
-    }
+  call ShiftReference {
+    input:
+      ref_fasta = ref_fasta,
+      ref_fasta_index = ref_fasta_index,
+      ref_dict = ref_dict,
+      preemptible_tries = preemptible_tries,
+      gatk_override = "gs://broad-dsp-spec-ops/scratch/andrea/gatk-package-shiftfasta.jar"
+  }
 
-    call IndexReference as IndexShiftedRef {
-      input:
-      ref_fasta = ShiftReference.shifted_ref_fasta,
-      preemptible_tries = preemptible_tries
-    }
+  call IndexReference as IndexShiftedRef {
+    input:
+    ref_fasta = ShiftReference.shifted_ref_fasta,
+    preemptible_tries = preemptible_tries
   }
 
 # only for bam input
@@ -108,7 +105,7 @@ workflow MicrobialGenomePipeline {
 File fastq1 = select_first([input_fastq1, SamToFastq.fastq1])
 File fastq2 = select_first([input_fastq1, SamToFastq.fastq2])
 File ubam = select_first([RevertSam.unmapped_bam, FastqToUnmappedBam.output_unmapped_bam])
-Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
+Int num_dangling_bases_with_default = select_first([num_dangling_bases, 3])
 
 # pass in 2 fastq files and unmapped bam
   call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToRef {
@@ -127,6 +124,22 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
       preemptible_tries = preemptible_tries
   }
 
+  call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToShiftedRef {
+    input:
+      unmapped_bam = ubam,
+      fastq1 = fastq1,
+      fastq2 = fastq2,
+      ref_dict = ShiftReference.shifted_ref_dict,
+      ref_fasta = ShiftReference.shifted_ref_fasta,
+      ref_fasta_index = ShiftReference.shifted_ref_fasta_index,
+      ref_amb = IndexShiftedRef.ref_amb,
+      ref_ann = IndexShiftedRef.ref_ann,
+      ref_bwt = IndexShiftedRef.ref_bwt,
+      ref_pac = IndexShiftedRef.ref_pac,
+      ref_sa = IndexShiftedRef.ref_sa,
+      preemptible_tries = preemptible_tries
+  }
+
   call M2 as CallM2 {
     input:
       input_bam = AlignToRef.aligned_bam,
@@ -142,78 +155,54 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
       preemptible_tries = preemptible_tries
   }
 
-
-  if (circular_ref) {
-    call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToShiftedRef {
-      input:
-        unmapped_bam = ubam,
-        fastq1 = fastq1,
-        fastq2 = fastq2,
-        ref_dict = ShiftReference.shifted_ref_dict,
-        ref_fasta = ShiftReference.shifted_ref_fasta,
-        ref_fasta_index = ShiftReference.shifted_ref_fasta_index,
-        ref_amb = IndexShiftedRef.ref_amb,
-        ref_ann = IndexShiftedRef.ref_ann,
-        ref_bwt = IndexShiftedRef.ref_bwt,
-        ref_pac = IndexShiftedRef.ref_pac,
-        ref_sa = IndexShiftedRef.ref_sa,
-        preemptible_tries = preemptible_tries
-    }
-
-    call M2 as CallShiftedM2 {
-      input:
-        input_bam = AlignToShiftedRef.aligned_bam,
-        input_bai = AlignToShiftedRef.aligned_bai,
-        ref_fasta = ShiftReference.shifted_ref_fasta,
-        ref_fai = ShiftReference.shifted_ref_fasta_index,
-        ref_dict = ShiftReference.shifted_ref_dict,
-        intervals = ShiftReference.shifted_intervals,
-        num_dangling_bases = num_dangling_bases_with_default,
-        make_bamout = make_bamout,
-        m2_extra_args = m2_extra_args,
-        gatk_override = gatk_override,
-        preemptible_tries = preemptible_tries
-    }
-
-    if (defined(make_bamout) && make_bamout) {
-      call ShiftBackBam {
-        input:
-          bam = CallShiftedM2.output_bamout,
-          shiftback_chain = ShiftReference.shiftback_chain,
-          preemptible_tries = preemptible_tries
-
-      }
-    }
-
-    call LiftoverAndCombineVcfs {
-      input:
-        shifted_vcf = CallShiftedM2.raw_vcf,
-        vcf = CallM2.raw_vcf,
-        ref_fasta = ref_fasta,
-        ref_fasta_index = ref_fasta_index,
-        ref_dict = ref_dict,
-        shiftback_chain = ShiftReference.shiftback_chain,
-        preemptible_tries = preemptible_tries
-    }
-
-    call MergeStats {
-      input:
-        shifted_stats = CallShiftedM2.stats,
-        non_shifted_stats = CallM2.stats,
-        gatk_override = gatk_override,
-        preemptible_tries = preemptible_tries
-    }
+  call M2 as CallShiftedM2 {
+    input:
+      input_bam = AlignToShiftedRef.aligned_bam,
+      input_bai = AlignToShiftedRef.aligned_bai,
+      ref_fasta = ShiftReference.shifted_ref_fasta,
+      ref_fai = ShiftReference.shifted_ref_fasta_index,
+      ref_dict = ShiftReference.shifted_ref_dict,
+      intervals = ShiftReference.shifted_intervals,
+      num_dangling_bases = num_dangling_bases_with_default,
+      make_bamout = make_bamout,
+      m2_extra_args = m2_extra_args,
+      gatk_override = gatk_override,
+      preemptible_tries = preemptible_tries
   }
 
-  File raw_vcf = select_first([LiftoverAndCombineVcfs.final_vcf, CallM2.raw_vcf])
-  File raw_vcf_idx = select_first([LiftoverAndCombineVcfs.final_vcf_index, CallM2.raw_vcf_idx])
-  File stats = select_first([MergeStats.stats, CallM2.stats])
+if (defined(make_bamout) && make_bamout) {
+  call ShiftBackBam {
+    input:
+      bam = CallShiftedM2.output_bamout,
+      shiftback_chain = ShiftReference.shiftback_chain,
+      preemptible_tries = preemptible_tries
+
+  }
+}
+  call LiftoverAndCombineVcfs {
+    input:
+      shifted_vcf = CallShiftedM2.raw_vcf,
+      vcf = CallM2.raw_vcf,
+      ref_fasta = ref_fasta,
+      ref_fasta_index = ref_fasta_index,
+      ref_dict = ref_dict,
+      shiftback_chain = ShiftReference.shiftback_chain,
+      preemptible_tries = preemptible_tries
+  }
+
+  call MergeStats {
+    input:
+      shifted_stats = CallShiftedM2.stats,
+      non_shifted_stats = CallM2.stats,
+      gatk_override = gatk_override,
+      preemptible_tries = preemptible_tries
+  }
 
   call Filter {
     input:
-      raw_vcf = raw_vcf,
-      raw_vcf_index = raw_vcf_idx,
-      raw_vcf_stats = stats,
+      raw_vcf = LiftoverAndCombineVcfs.final_vcf,
+      raw_vcf_index = LiftoverAndCombineVcfs.final_vcf_index,
+      raw_vcf_stats = MergeStats.stats,
       sample_name = sample_name,
       ref_fasta = ref_fasta,
       ref_fai = ref_fasta_index,
@@ -226,22 +215,21 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
   }
 
   output {
-    File final_vcf = raw_vcf
-    File final_vcf_index = raw_vcf_idx
-    File stats = stats
+    File final_vcf = LiftoverAndCombineVcfs.final_vcf
+    File final_vcf_index = LiftoverAndCombineVcfs.final_vcf_index
     File filtered_vcf = Filter.filtered_vcf
     File filtered_vcf_idx = Filter.filtered_vcf_idx
     File unmapped_bam = ubam
-    File? shifted_ref_dict = ShiftReference.shifted_ref_dict
-    File? shifted_ref_fasta = ShiftReference.shifted_ref_fasta
-    File? shifted_ref_fasta_index = ShiftReference.shifted_ref_fasta_index
-    File? shifted_intervals = ShiftReference.shifted_intervals
-    File? unshifted_intervals = ShiftReference.unshifted_intervals
-    File? shifted_ref_amb = IndexShiftedRef.ref_amb
-    File? shifted_ref_ann = IndexShiftedRef.ref_ann
-    File? shifted_ref_bwt = IndexShiftedRef.ref_bwt
-    File? shifted_ref_pac = IndexShiftedRef.ref_pac
-    File? shifted_ref_sa = IndexShiftedRef.ref_sa
+    File shifted_ref_dict = ShiftReference.shifted_ref_dict
+    File shifted_ref_fasta = ShiftReference.shifted_ref_fasta
+    File shifted_ref_fasta_index = ShiftReference.shifted_ref_fasta_index
+    File shifted_intervals = ShiftReference.shifted_intervals
+    File unshifted_intervals = ShiftReference.unshifted_intervals
+    File shifted_ref_amb = IndexShiftedRef.ref_amb
+    File shifted_ref_ann = IndexShiftedRef.ref_ann
+    File shifted_ref_bwt = IndexShiftedRef.ref_bwt
+    File shifted_ref_pac = IndexShiftedRef.ref_pac
+    File shifted_ref_sa = IndexShiftedRef.ref_sa
     File? bamout_bam = CallM2.output_bamout
     File? shifted_bamout_bam = CallShiftedM2.output_bamout
     File? shifted_back_bamout_bam = ShiftBackBam.bamout
@@ -487,7 +475,7 @@ task M2 {
         ~{true='--bam-output bamout.bam' false='' make_bamout} \
         ~{m2_extra_args} \
         --annotation StrandBiasBySample \
-        --num-matching-bases-in-dangling-end-to-recover ~{num_dangling_bases} \
+        --num-matching-bases-in-dangling-end-to-recover 1 \
         --max-reads-per-alignment-start 75 
   >>>
   runtime {
