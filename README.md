@@ -1,4 +1,4 @@
-# GATK-for-Microbes: GATK Best Practices for Variant Calling in Microbial Genomes
+# GATK-for-Microbes: GATK Best Practices for Variant Calling in Microbial Genomes (alpha version)
 
 A reproducible pipeline for SNP and Indel variant calling in microbial whole-genome sequencing data.  
 
