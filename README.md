@@ -41,6 +41,8 @@ Results of concordance comparison, summary metrics, and ROC curve data files.
 
 ### 3. DisplayConcordance Jupyter Notebook
 
+Concordance notebooks are available in our public Terra workspace: https://app.terra.bio/#workspaces/help-gatk/GATK%20For%20Microbes
+
 We have also provided a notebook which takes as input the results of the MicrobialConcordancePipeline and plots the concordance comparison as shown in the image below. This notebook helps us streamline and quickly test new improvements we make to the pipeline against a) previous versions of the pipeline and/or b) other tools/pipelines.
 
 ![notebook](https://drive.google.com/uc?export=view&id=1Z_39Gv6LbvDqa1obqoTfR7PIYoKiqhFC)
@@ -55,9 +57,6 @@ This material is provided by the GATK Team. Please post any questions or concern
 ### License  
 **Copyright Broad Institute, 2019 | BSD-3**  
 All code provided in this workspace is released under the WDL open source code license (BSD-3) (full license text at https://github.com/openwdl/wdl/blob/master/LICENSE). Note however that the programs called by the scripts may be subject to different licenses. Users are responsible for checking that they are authorized to run all programs before running these tools.
-
-### Workspace Change Log
-Author | Bhanu Gandham and Andrea Haessly |
 
 
 
