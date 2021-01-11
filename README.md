@@ -25,18 +25,6 @@ This workflow accepts WGS FASTQ or BAM files as inputs and closest reference FAS
 **What does it output?** .    
 A filtered VCF file of SNP/Indel calls.         
 
-**Sample data description and location**    
-An example bam input of *Mycobacterium tuberculosis* is provided in the workspace data model for testing.    
-
-**Reference data description and location**  
-The required and optional references and resources for the Tools are included in the Workspace Data table.       
-
-**Time and cost estimates**    
-
-| Participant | Size | Time | Cost $ |
-| :------------------: | :----------------: | :------: | :--------: |
-| mtb | 675.12 MB | 0:16:00 | <0.01 |
-
 **Software Version Notes**   
 GATK 4.1.9.0  
 
@@ -50,9 +38,6 @@ This workflow accepts one or more samples and truth vcf files as inputs and clos
 
 **What does it output?** .    
 Results of concordance comparison, summary metrics, and ROC curve data files.      
-
-Cost and Time will vary, view [Controlling-Cloud-costs-sample-use-cases](https://support.terra.bio/hc/en-us/articles/360029772212) for further details.  
-Users can also use [Google's BigQuery](https://software.broadinstitute.org/firecloud/documentation/article?id=11788) for task level calculation. 
 
 ### 3. DisplayConcordance Jupyter Notebook
 
@@ -72,9 +57,7 @@ This material is provided by the GATK Team. Please post any questions or concern
 All code provided in this workspace is released under the WDL open source code license (BSD-3) (full license text at https://github.com/openwdl/wdl/blob/master/LICENSE). Note however that the programs called by the scripts may be subject to different licenses. Users are responsible for checking that they are authorized to run all programs before running these tools.
 
 ### Workspace Change Log
-| Date | Change | Author |
-| --- | --- | --- |
-|  2020-11-12 | Initial Setup | Bhanu Gandham and Andrea Haessly |
+Author | Bhanu Gandham and Andrea Haessly |
 
 
 
