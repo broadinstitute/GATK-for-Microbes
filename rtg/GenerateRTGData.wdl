@@ -58,6 +58,7 @@ workflow GenerateRTGData {
   output {
       Array[File] gatk_concordance_summary_files = GATKConcordance.concordance_tsv
       Array[File] weighted_roc_files = EvalVcf.weighted_roc_files
+      Array[File] rtg_summary_txt = EvalVcf.rtg_summary_txt
       File rocplot = GeneratePlots.rocplot
   }
 }
@@ -118,12 +119,14 @@ task EvalVcf {
       sample_basename=`echo $sample_vcf_gz | awk -F '/' '{ print $NF }' | sed -E 's/\.vcf[\.gz]+//'`
       rtg vcfeval -b ~{baseline_vcf_gz} -c $sample_vcf_gz -o ${sample_basename}_vcfeval -t ~{truth_basename}.sdf --squash-ploidy --vcf-score-field=INFO.TLOD
       ln -s ${sample_basename}_vcfeval/weighted_roc.tsv.gz ${sample_basename}_weighted_roc.tsv.gz
+      ln -s ${sample_basename}_vcfeval/summary.txt ${sample_basename}_summary.txt
     done
     
   >>>
   
   output {
     Array[File] weighted_roc_files = glob("*weighted_roc.tsv.gz")
+    Array[File] rtg_summary_txt = glob("*summary.txt")
   }
 
   runtime {
