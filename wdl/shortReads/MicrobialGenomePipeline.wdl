@@ -63,7 +63,6 @@ workflow MicrobialGenomePipeline {
         ref_fasta_index = ref_fasta_index,
         ref_dict = ref_dict,
         preemptible_tries = preemptible_tries,
-        gatk_override = "gs://broad-dsp-spec-ops/scratch/andrea/gatk-package-shiftfasta.jar"
     }
 
     call IndexReference as IndexShiftedRef {
