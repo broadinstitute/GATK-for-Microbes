@@ -98,7 +98,6 @@ task MultiTechCanu {
         nanopore_reads:         "input raw nanopore reads"
         genome_size:            "genome size you’re assembling"
         output_file_prefix:     "prefix to output files"
-        corrected_error_rate:   "parameter to canu's \'correctedErrorRate\'"
     }
 
     Int disk_size = 100 * ceil(size(nanopore_reads, "GB"))
