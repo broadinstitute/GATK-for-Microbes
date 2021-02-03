@@ -1,7 +1,7 @@
 version 1.0
 
-import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/bg_adding_canu_wdl/wdl/longReads/Structs.wdl"
-import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/bg_adding_canu_wdl/wdl/longReads/CorrectTrimAssemble.wdl" as CTA
+import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/master/wdl/longReads/Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/GATK-for-Microbes/master/wdl/longReads/CorrectTrimAssemble.wdl" as CTA
 
 workflow AssembleLongReads {
 
