@@ -99,7 +99,6 @@ task MultiTechCanu {
         genome_size:            "genome size you’re assembling"
         output_file_prefix:     "prefix to output files"
         corrected_error_rate:   "parameter to canu's \'correctedErrorRate\'"
-        longreads_type:         "whether the reads are a) pacbio or b) nanopore or c) both"
     }
 
     Int disk_size = 100 * ceil(size(nanopore_reads, "GB"))
