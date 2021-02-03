@@ -1,19 +1,18 @@
 version 1.0
 
-##########################################################################################
-# Workflow to run Canu on Microbial nanopore and pacbio datasets
-##########################################################################################
-
 import "Structs.wdl"
 
 workflow CorrectTrimAssemble {
+
+    meta {
+    description: "Workflow to run correct trim and assemble microbial nanopore or pacbio datasets using canu."
+  }
     input {
         String output_file_prefix
         String genome_size
         File reads
-        Float correct_corrected_error_rate
-        Float trim_corrected_error_rate
-        Float assemble_corrected_error_rate
+        Float corrected_error_rate
+        String longreads_type 
     }
 
     call Correct {
@@ -21,7 +20,8 @@ workflow CorrectTrimAssemble {
             output_file_prefix = output_file_prefix,
             genome_size = genome_size,
             reads = reads,
-            corrected_error_rate = correct_corrected_error_rate
+            corrected_error_rate = corrected_error_rate,
+            longreads_type = longreads_type
     }
 
     call Trim {
@@ -29,7 +29,8 @@ workflow CorrectTrimAssemble {
             output_file_prefix = output_file_prefix,
             genome_size = genome_size,
             corrected_reads_fasta_gz = Correct.corrected_reads_fasta_gz,
-            corrected_error_rate = trim_corrected_error_rate
+            corrected_error_rate = corrected_error_rate,
+            longreads_type = longreads_type
     }
 
     call Assemble {
@@ -37,7 +38,8 @@ workflow CorrectTrimAssemble {
             genome_size = genome_size,
             output_file_prefix = output_file_prefix,
             trimmed_reads_fasta_gz = Trim.trimmed_reads_fasta_gz,
-            corrected_error_rate = assemble_corrected_error_rate
+            corrected_error_rate = corrected_error_rate,
+            longreads_type = longreads_type
     }
 
     output {
@@ -45,22 +47,25 @@ workflow CorrectTrimAssemble {
     }
 }
 
-# performs canu correct on raw reads, currently assumes ONT reads
+# performs canu correct on raw reads
 task Correct {
     input {
         String output_file_prefix
         String genome_size
         File reads
         Float corrected_error_rate
+        String longreads_type
+        String correct_out_dir = longreads_type + "correct_out_dir"
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        reads:                  "reads to be canu-corrected"
-        genome_size:            "estimate on genome size (parameter to canu's \'genomeSize\')"
+        reads:                  "input raw reads"
+        genome_size:            "genome size you’re assembling"
         output_file_prefix:     "prefix to output files"
         corrected_error_rate:   "parameter to canu's \'correctedErrorRate\'"
+        longreads_type:         "whether the reads are a) pacbio or b) nanopore or c) both"
     }
 
     Int disk_size = 100 * ceil(size(reads, "GB"))
@@ -69,17 +74,16 @@ task Correct {
         set -euxo pipefail
 
         canu -correct \
-            -p ~{output_file_prefix} -d canu_correct_output \
+            -p ~{output_file_prefix} -d ~{correct_out_dir} \
             genomeSize=~{genome_size} \
-            corMaxEvidenceErate=0.15 \
             correctedErrorRate=~{corrected_error_rate} \
-            -nanopore \
+            -~{longreads_type} \
             ~{reads} \
             || cat /cromwell_root/monitoring.log
     >>>
 
     output {
-        File corrected_reads_fasta_gz = "canu_correct_output/~{output_file_prefix}.correctedReads.fasta.gz"
+        File corrected_reads_fasta_gz = "~{correct_out_dir}/~{output_file_prefix}.correctedReads.fasta.gz"
     }
 
     #########################
@@ -111,6 +115,8 @@ task Trim {
         String genome_size
         File corrected_reads_fasta_gz
         Float corrected_error_rate
+        String longreads_type
+        String trim_out_dir = longreads_type + "trim_out_dir"
 
         RuntimeAttr? runtime_attr_override
     }
@@ -128,16 +134,17 @@ task Trim {
        set -euxo pipefail
 
        canu -trim \
-             -p ~{output_file_prefix} -d canu_trim_output \
+             -p ~{output_file_prefix} -d ~{trim_out_dir} \
             genomeSize=~{genome_size} \
             correctedErrorRate=~{corrected_error_rate} \
-            -nanopore-corrected \
+            -nanopore \
+            -corrected \
             ~{corrected_reads_fasta_gz} \
             || cat /cromwell_root/monitoring.log
     >>>
 
     output {
-        File trimmed_reads_fasta_gz = "canu_trim_output/~{output_file_prefix}.trimmedReads.fasta.gz"
+        File trimmed_reads_fasta_gz = "~{trim_out_dir}/~{output_file_prefix}.trimmedReads.fasta.gz"
     }
 
     #########################
@@ -169,6 +176,8 @@ task Assemble {
         String genome_size
         File trimmed_reads_fasta_gz
         Float corrected_error_rate
+        String longreads_type
+        String assemble_out_dir = longreads_type + "assemble_out_dir"
 
         RuntimeAttr? runtime_attr_override
     }
@@ -186,7 +195,7 @@ task Assemble {
         set -euxo pipefail
 
         canu -assemble \
-            -p ~{output_file_prefix} -d canu_assemble_output \
+            -p ~{output_file_prefix} -d ~{assemble_out_dir} \
             genomeSize=~{genome_size} \
             correctedErrorRate=~{corrected_error_rate} \
             -nanopore-corrected \
@@ -195,7 +204,7 @@ task Assemble {
     >>>
 
     output {
-        File canu_contigs_fasta = "canu_assemble_output/~{output_file_prefix}.contigs.fasta"
+        File canu_contigs_fasta = "~{assemble_out_dir}/~{output_file_prefix}.contigs.fasta"
     }
 
     #########################
