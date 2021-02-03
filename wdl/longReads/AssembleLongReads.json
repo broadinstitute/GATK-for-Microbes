@@ -1,0 +1,9 @@
+{
+"AssembleLongReads.output_file_prefix":"mgh283",
+"AssembleLongReads.genome_size":"4.9m",
+"AssembleLongReads.longreads_type":"both",
+"AssembleLongReads.nanopore_reads":"gs://gatk-for-bacteria/samples/Citr_freu_MGH283/oxford_nanopore/Citr_freu_MGH283.fq.gz",
+"AssembleLongReads.pacbio_reads":"gs://gatk-for-bacteria/samples/Citr_freu_MGH283/pacbio_smrt/Citr_freu_MGH283.fq.gz",
+"AssembleLongReads.nanopore_corrected_error_rate":"0.144",
+"AssembleLongReads.pacbio_corrected_error_rate":"0.045"
+}
