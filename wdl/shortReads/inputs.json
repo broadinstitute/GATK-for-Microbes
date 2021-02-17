@@ -10,7 +10,8 @@
 "MicrobialGenomePipeline.ref_bwt":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.bwt",
 "MicrobialGenomePipeline.ref_pac":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.pac",
 "MicrobialGenomePipeline.ref_sa":"gs://broad-dsp-spec-ops/scratch/andrea/mtb/Mycobacterium_tuberculosis_H37Rv.fasta.sa",
-"MicrobialGenomePipeline.gatk_override":"gs://broad-dsp-spec-ops/scratch/andrea/gatk-microbialmode.jar",
+"MicrobialGenomePipeline.gatk_override":"gs://gatk-for-microbes/jar_files/gatk-microbialmode.jar",
+"MicrobialGenomePipeline.ShiftReference.gatk_override":"gs://gatk-for-microbes/jar_files/gatk-package-shiftfasta.jar",
 "MicrobialGenomePipeline.make_bamout":"true",
 "MicrobialGenomePipeline.num_dangling_bases":1,
 "MicrobialGenomePipeline.circular_ref":true
