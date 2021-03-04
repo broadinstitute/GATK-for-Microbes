@@ -1,0 +1,6 @@
+{
+  "pilon_practice.message": "Working!",
+  "pilon_practice.reference": "Klebsiella_pneumoniae_subsp_pneumoniae_MGH_78578_plasmids.fasta",
+  "pilon_practice.bam_file": "frags_aligned.bam",
+  "pilon_practice.bai_file": "frags_aligned.bam.bai"
+}
