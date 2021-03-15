@@ -4,7 +4,7 @@ A reproducible pipeline for SNP and Indel variant calling in microbial whole-gen
 
 This pipeline is in the **alpha stage** of development. We have done our intial benchmarking and have seen promising results with sensitivity and precision. We are  sharing this pipeline with the community to get feedback and make further improvements where required. 
 
-Usage: cromshell submit wdl/shortReads/MicrobialGenomePipeline.wdl align-inputs.json
+Usage: cromshell submit wdl/shortReads/MicrobialGenomePipeline.wdl wdl/shortReads/inputs.json
 
 ### Summary 
 
