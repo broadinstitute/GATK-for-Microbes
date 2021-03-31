@@ -2,6 +2,8 @@ import subprocess
 import argparse
 import tempfile
 import os.path
+import pysam
+import pysamstats
 
 #checks if file exists
 def is_valid_file(parser, arg):
@@ -16,6 +18,23 @@ def merge(bam_file, distance):
 	c0 = subprocess.run(["samtools view -q 1 -U {} -o /dev/null {}".format(tf.name, bam_file)], shell=True)
 	c1 = subprocess.Popen(["bedtools bamtobed -i {} | bedtools merge -d {}".format(tf.name, distance)], shell=True, stdout=open("merged.bed", "w"))
 
+#this function will take a bam file and output a bed file showing the regions of collapsed repeat
+def CNV_calling(bam_file):
+	mybam = pysam.AlignmentFile(bam_file)
+	chrom = []
+	pos = []
+	reads = []
+
+	#Pysamstats pulls out the chrom, pos, and number of reads, at each pos and then I load then into lists for later comparison
+	for rec in pysamstats.stat_coverage(mybam):
+	    chrom.append(rec['chrom'])
+	    pos.append(rec['pos'])
+	    reads.append(rec['reads_all'])
+
+	#check to make sure the lists filled correctly and are same size
+	print(len(chrom))
+	print(len(pos))
+	print(len(reads))
 
 def main():
 	parser = argparse.ArgumentParser(description='Creating a bed file of map qual 0 regions')
@@ -32,6 +51,7 @@ def main():
 	distance = args.integer
 
 	merge(bam_file, distance)
+	CNV_calling(bam_file)
 
 
 if __name__ == '__main__':
