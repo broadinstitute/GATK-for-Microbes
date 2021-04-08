@@ -20,21 +20,7 @@ def merge(bam_file, distance):
 
 #this function will take a bam file and output a bed file showing the regions of collapsed repeat
 def CNV_calling(bam_file):
-	mybam = pysam.AlignmentFile(bam_file)
-	chrom = []
-	pos = []
-	reads = []
-
-	#Pysamstats pulls out the chrom, pos, and number of reads, at each pos and then I load then into lists for later comparison
-	for rec in pysamstats.stat_coverage(mybam):
-	    chrom.append(rec['chrom'])
-	    pos.append(rec['pos'])
-	    reads.append(rec['reads_all'])
-
-	#check to make sure the lists filled correctly and are same size
-	print(len(chrom))
-	print(len(pos))
-	print(len(reads))
+	
 
 def main():
 	parser = argparse.ArgumentParser(description='Creating a bed file of map qual 0 regions')
@@ -51,7 +37,7 @@ def main():
 	distance = args.integer
 
 	merge(bam_file, distance)
-	CNV_calling(bam_file)
+	#CNV_calling(bam_file)
 
 
 if __name__ == '__main__':
