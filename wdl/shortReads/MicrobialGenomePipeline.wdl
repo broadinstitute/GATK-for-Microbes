@@ -108,6 +108,8 @@ File fastq1 = select_first([input_fastq1, SamToFastq.fastq1])
 File fastq2 = select_first([input_fastq1, SamToFastq.fastq2])
 File ubam = select_first([RevertSam.unmapped_bam, FastqToUnmappedBam.output_unmapped_bam])
 Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
+File in_bam = select_first([input_bam, AlignToRef.aligned_bam])
+File in_bai = select_first([input_bam_index, AlignToRef.aligned_bai])
 
 # pass in 2 fastq files and unmapped bam
   call AlignAndMarkDuplicates.MicrobialAlignmentPipeline as AlignToRef {
@@ -128,8 +130,8 @@ Int num_dangling_bases_with_default = select_first([num_dangling_bases, 1])
 
   call M2 as CallM2 {
     input:
-      input_bam = AlignToRef.aligned_bam,
-      input_bai = AlignToRef.aligned_bai,
+      input_bam = in_bam,
+      input_bai = in_bai,
       ref_fasta = ref_fasta,
       ref_fai = ref_fasta_index,
       ref_dict = ref_dict,
