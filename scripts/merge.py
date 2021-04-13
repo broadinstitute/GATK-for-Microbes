@@ -16,7 +16,7 @@ def is_valid_file(parser, arg):
 def merge(bam_file, distance):
 	tf = tempfile.NamedTemporaryFile(delete=False, suffix='.bam')
 	c0 = subprocess.run(["samtools view -q 1 -U {} -o /dev/null {}".format(tf.name, bam_file)], shell=True)
-	c1 = subprocess.Popen(["bedtools bamtobed -i {} | bedtools merge -d {} -c 1 -o count | awk '$4 > 50'".format(tf.name, distance)], shell=True, stdout=open("merged2.bed", "w"))
+	c1 = subprocess.Popen(["bedtools bamtobed -i {} | bedtools merge -d {} -c 1 -o count | awk '$4 > 50'".format(tf.name, distance)], shell=True, stdout=open("merged.bed", "w"))
 
 #this function will take a bam file and output a bed file showing the regions of collapsed repeat
 #def CNV_calling(bam_file):
