@@ -17,59 +17,58 @@ def mean_of_array(reads,start, pos):
 	return mean
 
 def main():
-	mybam = pysam.AlignmentFile('UMB.aligned.sorted.bam')
+	mybam = pysam.AlignmentFile('MGH283_align_sort.bam')
 
-	# iterate over statistics, one record at a time
-	#stats = pysamstats.load_coverage(mybam, chrom='NZ_CP023386.1', start= 2000000, end=3000000)
-	stats = pysamstats.load_coverage(mybam)
-
-	reads = stats.reads_all
-	position = stats.pos
-	chrom = stats.chrom
-
-	print(len(reads))
-	print(len(position))
-	print(len(chrom))
-
-	thresh_up, thresh_down = threshold(reads)
-	#print(thresh_up)
-	#print(thresh_down)
-
-	start = 0
-	big_start = 0
-	last_end = 0
-
-	file = 'output_std.txt'
+	file = 'output_std_mgh_contig.txt'
 
 	with open(file, "w") as f:
 		print("Index Chrom Pos Thresh Diff", file=f)
-		for i in range(len(reads)):
-			if i == ((len(reads)) - 1):
-				current = reads[i]
-				next_one = reads[0]
-				next_pos = position[0]
-			else:
-				current = reads[i]
-				next_one = reads[i+1]
-				next_pos = position[i+1]
+		for contig in mybam.header.references:  # Do the analysis per contig
+			stats = pysamstats.load_coverage(mybam, chrom=contig)
 
-			if (i % 1000) == 0 and i != 0:
-				#print(str(i) + ' : ' + str(position[i]))
+			reads = stats.reads_pp
+			position = stats.pos
+			chrom = stats.chrom
+
+			print(len(reads))
+			print(len(position))
+			print(len(chrom))
+
+			thresh_up, thresh_down = threshold(reads)
+			#print(thresh_up)
+			#print(thresh_down)
+
+			start = 0
+			big_start = 0
+			last_end = 0
+
+			for i in range(1000, len(reads), 1000):
+				if i == ((len(reads)) - 1):
+					current = reads[i]
+					next_one = reads[0]
+					next_pos = position[0]
+				else:
+					current = reads[i]
+					next_one = reads[i+1]
+					next_pos = position[i+1]
+
 				mean = mean_of_array(reads, start, i)
 				if mean >= thresh_up:
 					if last_end == start:
-						print(str(big_start) + ' ' + str(i) + ' ' + str(mean) + ' +3sigma ' + str(chrom[big_start]).lstrip('b\'').rstrip('\'') + ':' + str(position[big_start]) + ' ' + str(chrom[i]).lstrip('b\'').rstrip('\'') + ':' + str(position[i]), file=f)
-						print(str(big_start) + ' ' + str(i) + ' ' + str(mean) + ' +3sigma ' + str(chrom[big_start]).lstrip('b\'').rstrip('\'') + ':' + str(position[big_start]) + ' ' + str(chrom[i]).lstrip('b\'').rstrip('\'') + ':' + str(position[i]))
+						big_start_chrom = str(chrom[big_start]).lstrip('b\'').rstrip('\'')
+						i_chrom = str(chrom[i]).lstrip('b\'').rstrip('\'')
+						print(f'{big_start:<15} {i:<15} {mean:<10} +3sigma {big_start_chrom:>20}:{position[big_start]} {i_chrom:>20}:{position[i]}')
+						print(f'{big_start:<15} {i:<15} {mean:<10} +3sigma {big_start_chrom:>20}:{position[big_start]} {i_chrom:>20}:{position[i]}', file=f)
 					else:
-						print(str(start) + ' ' + str(i) + ' ' + str(mean) + ' +3sigma ' + str(chrom[start]).lstrip('b\'').rstrip('\'') + ':' + str(position[start]) + ' ' + str(chrom[i]).lstrip('b\'').rstrip('\'') + ':' + str(position[i]), file=f)
-						print(str(start) + ' ' + str(i) + ' ' + str(mean) + ' +3sigma ' + str(chrom[start]).lstrip('b\'').rstrip('\'') + ':' + str(position[start]) + ' ' + str(chrom[i]).lstrip('b\'').rstrip('\'') + ':' + str(position[i]))
+						start_chrom = str(chrom[start]).lstrip('b\'').rstrip('\'')
+						i_chrom = str(chrom[i]).lstrip('b\'').rstrip('\'')
+						print(f'{start:<15} {i:<15} {mean:<10} +3sigma {start_chrom:>20}:{position[start]} {i_chrom:>20}:{position[i]}')
+						print(f'{start:<15} {i:<15} {mean:<10} +3sigma {start_chrom:>20}:{position[start]} {i_chrom:>20}:{position[i]}', file=f)
 						big_start = start
 					last_end = i
-				else:
-					print(str(start) + ' : ' + str(i) + ' ' + str(position[start]) + ' : ' + str(position[i]) + ' ' + str(mean))
 				start = i
 
-	c1 = subprocess.Popen(["tac {} | sort -u -k 1,1 | tac"].format(file), shell=True, stdout=open("output_std_final.txt", "w"))
+	c1 = subprocess.Popen(["tac {} | sort -u -k 1,1 | tac".format(file)], shell=True, stdout=open("output_std_mgh_contig_final.txt", "w"))
 
 if __name__ == '__main__':
     main()
