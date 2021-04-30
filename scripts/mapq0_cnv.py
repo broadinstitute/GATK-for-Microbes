@@ -16,12 +16,12 @@ def is_valid_file(parser, arg):
 
 #takes in bam file and distance for merge function and outputs bed file showing regions with map qual 0
 def merge(bam_file, distance, cutoff, output):
-	tf = tempfile.NamedTemporaryFile(delete=False, suffix='.bam')
-	c0 = subprocess.run(["samtools view -q 1 -U {} -o /dev/null {}".format(tf.name, bam_file)], shell=True)
-	c1 = subprocess.run(["bedtools bamtobed -i {} | bedtools merge -d {} -c 1 -o count | awk '$4 > {}'".format(tf.name, distance, cutoff)], shell=True, capture_output=True, text=True)
-	for line in c1.stdout[0:-1].split('\n'):
-		a = line.split('\t')
-		print(a[0], a[1], a[2], 'mapq0', a[3], sep='\t', file=output)
+	with tempfile.NamedTemporaryFile(suffix='.bam') as tf:
+		c0 = subprocess.run(["samtools view -q 1 -U {} -o /dev/null {}".format(tf.name, bam_file)], shell=True)
+		c1 = subprocess.run(["bedtools bamtobed -i {} | bedtools merge -d {} -c 1 -o count | awk '$4 > {}'".format(tf.name, distance, cutoff)], shell=True, capture_output=True, text=True)
+		for line in c1.stdout[0:-1].split('\n'):
+			a = line.split('\t')
+			print(a[0], a[1], a[2], 'mapq0', a[3], sep='\t', file=output)
 
 #calculates the threshold for classifying a significant change in number of reads (+3sigma)
 def threshold(reads):
