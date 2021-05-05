@@ -1,10 +1,5 @@
-FROM python:3
-
+FROM continuumio/miniconda3
 WORKDIR /usr/src/app
-
-COPY ./requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
+RUN conda install -c bioconda -c conda-forge samtools bedtools numpy "pysam>=0.16" pysamstats
 COPY mapq0_cnv.py .
-
-CMD [ "python", "./mapq0_cnv.py" ]
+ENTRYPOINT ["python", "./mapq0_cnv.py"]

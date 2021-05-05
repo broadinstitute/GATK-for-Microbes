@@ -51,7 +51,6 @@ def cnv_calling(bam_file, output):
         state = "base"
         for i in range(1000, len(reads), 1000):
             mean = mean_of_array(reads, start, i)
-            every.append(mean)
             if mean >= thresh_up:
                 if last_end != start:
                     big_start = start
