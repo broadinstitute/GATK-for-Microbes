@@ -47,6 +47,17 @@ We have also provided a notebook which takes as input the results of the Microbi
 
 ![notebook](https://drive.google.com/uc?export=view&id=1Z_39Gv6LbvDqa1obqoTfR7PIYoKiqhFC)
 
+### 4. Mapq0 and CNV calling script
+
+**What does it do?**     
+This python script tabulates a comprehensive list of mapq0 and CNV regions in a genome. A mapq0 region is described as a region where there are a considerable number of mapq0 reads. A CNV region is described as an area where the mean number of reads greatly increases from the mean number of reads in that contig.
+
+**What data does it require as input?**  
+This script requires a BAM file as input. Optional inputs include the maximum distance between mapq0 features allowed for mapq0 features to be merged (default is 0, meaning only overlapping and/or book-ended features are merged) and the minimum number of mapq0 reads that must be present for the region to be outputted (default is 50).
+
+**What does it output?** .    
+A BED file.     
+
 ---
 
 ### Contact Information  
