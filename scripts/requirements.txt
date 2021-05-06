@@ -1,0 +1,3 @@
+pysam
+pysamstats
+numpy
