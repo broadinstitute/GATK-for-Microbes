@@ -51,7 +51,7 @@ We have also provided a notebook which takes as input the results of the Microbi
 ---
 
 ### Contact Information  
-This material is provided by the GATK Team. Please post any questions or concerns regarding the GATK tool to the [GATK forum](https://gatk.broadinstitute.org/hc/en-us/community/topics)
+This material is provided by the GATK Team. Please post any questions or concerns regarding the GATK tool to the [GATK forum] or email Bhanu Gandham bgandham@broadinstitute.org (https://gatk.broadinstitute.org/hc/en-us/community/topics)
 
 ### License  
 **Copyright Broad Institute, 2019 | BSD-3**  
